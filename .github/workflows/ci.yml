@@ -22,6 +22,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  branch-name:
+    name: Branch Name
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Branch Name
+        run: node scripts/check-branch-name.mjs
+        env:
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+
   commitlint:
     name: Commit Lint
     runs-on: ubuntu-latest

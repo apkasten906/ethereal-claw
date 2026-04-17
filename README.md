@@ -94,3 +94,21 @@ feat(cli): add ideate dry-run support
 ```
 
 Local enforcement is installed through Husky on `npm install`, and CI validates commit messages in GitHub as well.
+
+## Branch Conventions
+
+Branches use this format:
+
+```text
+type/kebab-case-description
+```
+
+Example:
+
+```text
+feat/milestone-1-scaffold
+```
+
+Allowed prefixes are `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`, `release`, and `hotfix`.
+
+Local enforcement runs in a Husky `pre-push` hook, and CI validates branch names in GitHub.

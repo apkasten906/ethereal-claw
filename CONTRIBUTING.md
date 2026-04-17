@@ -6,6 +6,30 @@
 - Open pull requests into `main`.
 - Prefer small, reviewable changes over large mixed-scope branches.
 
+Branch names must follow:
+
+```text
+type/kebab-case-description
+```
+
+Examples:
+
+- `feat/milestone-1-scaffold`
+- `fix/run-log-budget-status`
+- `docs/command-reference-update`
+
+Allowed branch prefixes:
+
+- `feat`
+- `fix`
+- `chore`
+- `docs`
+- `refactor`
+- `test`
+- `ci`
+- `release`
+- `hotfix`
+
 ## Local Validation
 
 Run the standard checks before opening a pull request:
@@ -44,6 +68,10 @@ Allowed scopes:
 - `features`
 
 The repo enforces this with a local Husky `commit-msg` hook and a CI commitlint check.
+
+## Branch Name Enforcement
+
+The repo enforces branch naming with a local Husky `pre-push` hook and a CI branch-name check.
 
 ## Changes
 
