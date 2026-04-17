@@ -1,4 +1,5 @@
 import path from "node:path";
+import { dump } from "js-yaml";
 import type { FeatureRecord } from "@ethereal-claw/shared";
 import { ensureDir, writeFileEnsured } from "../utils/file-system.js";
 
@@ -22,14 +23,17 @@ export class FeatureStructureService {
 
     await ensureDir(root);
     await Promise.all(directories.map((segment) => ensureDir(path.join(root, segment))));
-    await writeFileEnsured(path.join(root, "feature.yaml"), [
-      `slug: ${feature.slug}`,
-      `title: ${feature.title}`,
-      `request: ${JSON.stringify(feature.request)}`,
-      `status: ${feature.status}`,
-      `createdAt: ${feature.createdAt}`,
-      `updatedAt: ${feature.updatedAt}`
-    ].join("\n"));
+    await writeFileEnsured(
+      path.join(root, "feature.yaml"),
+      dump({
+        slug: feature.slug,
+        title: feature.title,
+        request: feature.request,
+        status: feature.status,
+        createdAt: feature.createdAt,
+        updatedAt: feature.updatedAt
+      }, { lineWidth: -1 })
+    );
 
     return root;
   }

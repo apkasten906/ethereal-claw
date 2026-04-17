@@ -2,10 +2,9 @@ export type AgentName =
   | "ideation"
   | "planner"
   | "story"
-  | "reviewer"
   | "implementer"
   | "tester"
-  | "review";
+  | "reviewer";
 
 export type ModelTier = "low" | "medium" | "high";
 

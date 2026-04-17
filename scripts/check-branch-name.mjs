@@ -15,6 +15,7 @@ const allowedPrefixes = [
 const branchPattern = new RegExp(
   `^(?:${allowedPrefixes.join("|")})\\/[a-z0-9]+(?:-[a-z0-9]+)*$`
 );
+const dependabotBranchPattern = /^dependabot\/.+$/;
 
 function getBranchName() {
   const explicitBranch = process.argv[2];
@@ -50,7 +51,7 @@ function printFailure(branchName) {
 try {
   const branchName = getBranchName();
 
-  if (!branchPattern.test(branchName)) {
+  if (!branchPattern.test(branchName) && !dependabotBranchPattern.test(branchName)) {
     printFailure(branchName);
     process.exit(1);
   }

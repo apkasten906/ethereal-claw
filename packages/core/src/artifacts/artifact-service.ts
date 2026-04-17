@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { RunLog } from "@ethereal-claw/shared";
-import { writeFileEnsured } from "../utils/file-system.js";
+import { ensureDir, writeFileEnsured } from "../utils/file-system.js";
 
 export class ArtifactService {
   constructor(private readonly rootDir = process.cwd()) {}
@@ -8,6 +8,13 @@ export class ArtifactService {
   async writeFeatureArtifact(featureSlug: string, relativePath: string, content: string): Promise<void> {
     const targetPath = path.join(this.rootDir, "features", featureSlug, relativePath);
     await writeFileEnsured(targetPath, content);
+  }
+
+  async ensureRuntimeDirectories(): Promise<void> {
+    await Promise.all([
+      ensureDir(path.join(this.rootDir, "features")),
+      ensureDir(path.join(this.rootDir, "runs"))
+    ]);
   }
 
   async writeRunLog(run: RunLog): Promise<void> {

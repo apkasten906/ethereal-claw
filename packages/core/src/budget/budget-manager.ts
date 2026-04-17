@@ -45,4 +45,8 @@ export class BudgetManager {
       status
     };
   }
+
+  reset(): void {
+    this.spentUsd = 0;
+  }
 }

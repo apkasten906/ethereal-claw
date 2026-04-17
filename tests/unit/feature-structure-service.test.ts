@@ -1,4 +1,4 @@
-import { access, mkdtemp, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -27,5 +27,28 @@ describe("FeatureStructureService", () => {
     });
 
     await expect(access(path.join(root, "features", "feature-auth-refresh", "stories"))).resolves.toBeUndefined();
+  });
+
+  it("serializes feature metadata safely as YAML", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-"));
+    tempDirs.push(root);
+
+    const service = new FeatureStructureService(root);
+    await service.createWorkspace({
+      slug: "feature-title-with-punctuation",
+      title: "Auth: Refresh #1",
+      request: "refresh tokens for admins: phase #1",
+      status: "draft",
+      createdAt: "2026-04-17T00:00:00.000Z",
+      updatedAt: "2026-04-17T00:00:00.000Z"
+    });
+
+    const featureYaml = await readFile(
+      path.join(root, "features", "feature-title-with-punctuation", "feature.yaml"),
+      "utf8"
+    );
+
+    expect(featureYaml).toContain("title: 'Auth: Refresh #1'");
+    expect(featureYaml).toContain("request: 'refresh tokens for admins: phase #1'");
   });
 });

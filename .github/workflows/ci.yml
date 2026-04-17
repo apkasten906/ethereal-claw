@@ -25,6 +25,7 @@ jobs:
   branch-name:
     name: Branch Name
     runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]'
 
     steps:
       - name: Checkout

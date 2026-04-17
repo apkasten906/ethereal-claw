@@ -13,6 +13,6 @@ export function createAgents(provider: LlmProvider) {
     story: new StoryAgent("story", provider, "low"),
     implementer: new ImplementerAgent("implementer", provider, "medium"),
     tester: new TesterAgent("tester", provider, "low"),
-    reviewer: new ReviewerAgent("review", provider, "medium")
+    reviewer: new ReviewerAgent("reviewer", provider, "medium")
   };
 }

@@ -43,6 +43,8 @@ describe("CLI smoke", () => {
     await runCli(root, ["init"]);
 
     await expect(access(path.join(root, "config", "ethereal-claw.config.yaml"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "features"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "runs"))).resolves.toBeUndefined();
   });
 
   it("ideate writes feature artifacts and a run log with budget data", async () => {

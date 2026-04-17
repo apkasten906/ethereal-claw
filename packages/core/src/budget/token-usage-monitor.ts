@@ -1,7 +1,7 @@
 import type { AgentExecution } from "@ethereal-claw/shared";
 
 export class TokenUsageMonitor {
-  private readonly executions: AgentExecution[] = [];
+  private executions: AgentExecution[] = [];
 
   record(execution: AgentExecution): void {
     this.executions.push(execution);
@@ -9,5 +9,9 @@ export class TokenUsageMonitor {
 
   all(): AgentExecution[] {
     return [...this.executions];
+  }
+
+  reset(): void {
+    this.executions = [];
   }
 }

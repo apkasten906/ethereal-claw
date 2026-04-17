@@ -3,6 +3,7 @@ import type { LlmProvider } from "../providers/llm-provider.js";
 
 export interface AgentResult {
   content: string;
+  tier: ModelTier;
   promptTokens: number;
   completionTokens: number;
   estimatedCostUsd: number;
@@ -26,6 +27,7 @@ export abstract class BaseAgent {
 
     return {
       content: response.content,
+      tier: this.tier,
       promptTokens: response.promptTokens,
       completionTokens: response.completionTokens,
       estimatedCostUsd: response.estimatedCostUsd

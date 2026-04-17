@@ -5,6 +5,7 @@ import { TokenUsageMonitor } from "../budget/token-usage-monitor.js";
 import { createAgents } from "../agents/agent-registry.js";
 import { ArtifactService } from "../artifacts/artifact-service.js";
 import { FeatureStructureService } from "../artifacts/feature-structure-service.js";
+import type { AgentResult } from "../agents/base-agent.js";
 import type { ClawConfig } from "../config/config-schema.js";
 import { GitService } from "../git/git-service.js";
 import { createLogger } from "../logging/logger.js";
@@ -40,10 +41,12 @@ export class WorkflowOrchestrator {
   }
 
   async init(): Promise<void> {
-    await this.artifacts.writeFeatureArtifact(".init", ".gitkeep", "");
+    await this.artifacts.ensureRuntimeDirectories();
   }
 
   async ideate(options: StageOptions): Promise<RunResult> {
+    this.resetStageState();
+    const startedAt = nowUtcIso();
     const feature = this.buildFeature(options);
     await this.featureStructure.createWorkspace(feature);
 
@@ -57,10 +60,12 @@ export class WorkflowOrchestrator {
     await this.artifacts.writeFeatureArtifact(feature.slug, path.join("stories", "001-initial-story.md"), storyDraft.content);
     await this.artifacts.writeFeatureArtifact(feature.slug, path.join("bdd", "001-initial.feature"), this.wrapGherkin(feature.title));
 
-    return this.finishRun(feature.slug, "ideate", options.dryRun ?? false, ["Ideation artifacts generated."]);
+    return this.finishRun(feature.slug, "ideate", startedAt, options.dryRun ?? false, ["Ideation artifacts generated."]);
   }
 
   async plan(options: StageOptions): Promise<RunResult> {
+    this.resetStageState();
+    const startedAt = nowUtcIso();
     const featureSlug = options.featureSlug ?? slugify(options.request);
     const plan = await this.agents.planner.run(options.request);
     this.recordExecution("planner", plan, "plan");
@@ -68,20 +73,24 @@ export class WorkflowOrchestrator {
     await this.artifacts.writeFeatureArtifact(featureSlug, "plan.md", plan.content);
     await this.artifacts.writeFeatureArtifact(featureSlug, path.join("implementation", "tasks.md"), this.defaultTasks());
 
-    return this.finishRun(featureSlug, "plan", options.dryRun ?? false, ["Planning artifacts generated."]);
+    return this.finishRun(featureSlug, "plan", startedAt, options.dryRun ?? false, ["Planning artifacts generated."]);
   }
 
   async implement(options: StageOptions): Promise<RunResult> {
+    this.resetStageState();
+    const startedAt = nowUtcIso();
     const featureSlug = options.featureSlug ?? slugify(options.request);
     const result = await this.agents.implementer.run(options.request);
     this.recordExecution("implementer", result, "implement");
 
     await this.artifacts.writeFeatureArtifact(featureSlug, path.join("implementation", "change-summary.md"), result.content);
 
-    return this.finishRun(featureSlug, "implement", options.dryRun ?? false, ["Implementation plan generated."]);
+    return this.finishRun(featureSlug, "implement", startedAt, options.dryRun ?? false, ["Implementation plan generated."]);
   }
 
   async test(options: StageOptions): Promise<RunResult> {
+    this.resetStageState();
+    const startedAt = nowUtcIso();
     const featureSlug = options.featureSlug ?? slugify(options.request);
     const result = await this.agents.tester.run(options.request);
     this.recordExecution("tester", result, "test");
@@ -89,18 +98,20 @@ export class WorkflowOrchestrator {
     await this.artifacts.writeFeatureArtifact(featureSlug, path.join("tests", "test-plan.md"), result.content);
     await this.artifacts.writeFeatureArtifact(featureSlug, path.join("tests", "generated-tests.md"), this.defaultGeneratedTests());
 
-    return this.finishRun(featureSlug, "test", options.dryRun ?? false, ["Test artifacts generated."]);
+    return this.finishRun(featureSlug, "test", startedAt, options.dryRun ?? false, ["Test artifacts generated."]);
   }
 
   async review(options: StageOptions): Promise<RunResult> {
+    this.resetStageState();
+    const startedAt = nowUtcIso();
     const featureSlug = options.featureSlug ?? slugify(options.request);
     const result = await this.agents.reviewer.run(options.request);
-    this.recordExecution("review", result, "review");
+    this.recordExecution("reviewer", result, "review");
 
     await this.artifacts.writeFeatureArtifact(featureSlug, path.join("review", "consistency-review.md"), result.content);
     await this.artifacts.writeFeatureArtifact(featureSlug, path.join("review", "code-review.md"), "Human review gate pending.\n");
 
-    return this.finishRun(featureSlug, "review", options.dryRun ?? false, ["Review artifacts generated."]);
+    return this.finishRun(featureSlug, "review", startedAt, options.dryRun ?? false, ["Review artifacts generated."]);
   }
 
   async run(options: StageOptions): Promise<RunResult[]> {
@@ -131,11 +142,16 @@ export class WorkflowOrchestrator {
     };
   }
 
-  private recordExecution(agent: AgentExecution["agent"], result: { promptTokens: number; completionTokens: number; estimatedCostUsd: number }, stage: WorkflowStage): void {
+  private resetStageState(): void {
+    this.usage.reset();
+    this.budget.reset();
+  }
+
+  private recordExecution(agent: AgentExecution["agent"], result: AgentResult, stage: WorkflowStage): void {
     this.usage.record({
       agent,
       step: stage,
-      tier: stage === "plan" || stage === "test" ? "low" : "medium",
+      tier: result.tier,
       estimatedInputTokens: result.promptTokens,
       estimatedOutputTokens: result.completionTokens,
       actualPromptTokens: result.promptTokens,
@@ -150,6 +166,7 @@ export class WorkflowOrchestrator {
   private async finishRun(
     featureSlug: string,
     stage: WorkflowStage,
+    startedAt: string,
     dryRun: boolean,
     notes: string[]
   ): Promise<RunResult> {
@@ -158,7 +175,7 @@ export class WorkflowOrchestrator {
       id: `run-${runId()}`,
       featureSlug,
       stage,
-      startedAt: nowUtcIso(),
+      startedAt,
       completedAt: nowUtcIso(),
       success: true,
       dryRun,
