@@ -32,11 +32,11 @@ export class WorkflowOrchestrator {
   constructor(
     private readonly provider: LlmProvider,
     private readonly config: ClawConfig,
-    rootDir = process.cwd()
+    private readonly rootDir = process.cwd()
   ) {
     this.budget = new BudgetManager(config.budget);
-    this.artifacts = new ArtifactService(rootDir);
-    this.featureStructure = new FeatureStructureService(rootDir);
+    this.artifacts = new ArtifactService(this.rootDir);
+    this.featureStructure = new FeatureStructureService(this.rootDir);
     this.agents = createAgents(provider);
   }
 
@@ -116,7 +116,6 @@ export class WorkflowOrchestrator {
 
   async run(options: StageOptions): Promise<RunResult[]> {
     const feature = this.buildFeature(options);
-    await this.featureStructure.createWorkspace(feature);
 
     return [
       await this.ideate({ ...options, featureSlug: feature.slug, title: feature.title }),
@@ -174,7 +173,7 @@ export class WorkflowOrchestrator {
     dryRun: boolean,
     notes: string[]
   ): Promise<RunResult> {
-    const branch = await this.git.currentBranch();
+    const branch = await this.git.currentBranch(this.rootDir);
     const run: RunLog = {
       id: `run-${runId()}`,
       featureSlug,

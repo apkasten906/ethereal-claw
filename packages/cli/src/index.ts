@@ -24,7 +24,7 @@ function getDefaultCommandName(): string {
   return "ethereal";
 }
 
-const fallbackName = rawInvokedName && rawInvokedName !== "index.js"
+const fallbackName = rawInvokedName && !/^index\.[^.]+$/i.test(rawInvokedName)
   ? rawInvokedName
   : getDefaultCommandName();
 

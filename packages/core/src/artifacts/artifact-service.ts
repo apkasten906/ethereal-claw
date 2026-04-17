@@ -7,7 +7,8 @@ export class ArtifactService {
 
   async writeFeatureArtifact(featureSlug: string, relativePath: string, content: string): Promise<void> {
     const safeFeatureSlug = assertFeatureSlug(featureSlug);
-    const targetPath = resolveWithin(this.rootDir, "features", safeFeatureSlug, relativePath);
+    const featureRoot = resolveWithin(this.rootDir, "features", safeFeatureSlug);
+    const targetPath = resolveWithin(featureRoot, relativePath);
     await writeFileEnsured(targetPath, content);
   }
 

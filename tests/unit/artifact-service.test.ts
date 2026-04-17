@@ -43,4 +43,15 @@ describe("ArtifactService", () => {
       })
     ).rejects.toThrow('Invalid feature slug: "../escape"');
   });
+
+  it("rejects path traversal in relative artifact paths", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-artifacts-"));
+    tempDirs.push(root);
+
+    const service = new ArtifactService(root);
+
+    await expect(
+      service.writeFeatureArtifact("feature-ok", "..\\..\\escape.txt", "content")
+    ).rejects.toThrow(/escapes root directory/i);
+  });
 });

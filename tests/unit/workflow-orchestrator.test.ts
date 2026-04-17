@@ -78,6 +78,20 @@ describe("WorkflowOrchestrator", () => {
     expect(implementResult.run.featureSlug).toBe("feature-refresh-tokens-for-admins");
   });
 
+  it("does not record the caller cwd branch for non-git workspaces", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    const result = await orchestrator.plan({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    expect(result.run.notes.some((note) => note.startsWith("branch="))).toBe(false);
+  });
+
   it("records distinct start and completion timestamps", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
     tempDirs.push(root);
