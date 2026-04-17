@@ -16,6 +16,7 @@
     "commitlint": "commitlint",
     "ec": "node packages/cli/dist/index.js",
     "ethereal": "node packages/cli/dist/index.js",
+    "lint": "node ./node_modules/eslint/bin/eslint.js .",
     "link:cli": "npm link --workspace @ethereal-claw/cli",
     "prepare": "husky",
     "test": "vitest run",
@@ -28,10 +29,14 @@
     "@commitlint/config-conventional": "^20.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.6.0",
+    "@eslint/js": "^9.37.0",
+    "eslint": "^9.37.0",
+    "globals": "^16.4.0",
     "husky": "^9.1.7",
     "rimraf": "^6.0.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.1",
     "vitest": "^3.2.4"
   }
 }
