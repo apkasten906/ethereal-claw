@@ -78,3 +78,19 @@ The project starts semantic versioning at `0.1.0`.
 ## GitHub Conventions
 
 The repository includes standard GitHub automation for CI, releases, Dependabot, and issue or pull request templates under `.github/`.
+
+## Commit Conventions
+
+Commits use a scoped conventional commit format:
+
+```text
+type(scope): subject
+```
+
+Example:
+
+```text
+feat(cli): add ideate dry-run support
+```
+
+Local enforcement is installed through Husky on `npm install`, and CI validates commit messages in GitHub as well.

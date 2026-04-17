@@ -2,6 +2,7 @@ export * from "./agents/agent-registry.js";
 export * from "./artifacts/artifact-service.js";
 export * from "./artifacts/feature-structure-service.js";
 export * from "./budget/budget-manager.js";
+export * from "./budget/token-estimator.js";
 export * from "./budget/token-usage-monitor.js";
 export * from "./config/config-schema.js";
 export * from "./config/load-config.js";

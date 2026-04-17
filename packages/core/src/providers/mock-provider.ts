@@ -1,11 +1,14 @@
 import type { LlmProvider, ProviderRequest, ProviderResponse } from "./llm-provider.js";
+import { estimateTokenUsage } from "../budget/token-estimator.js";
 
 export class MockProvider implements LlmProvider {
   readonly name = "mock";
 
   async complete(request: ProviderRequest): Promise<ProviderResponse> {
-    const promptTokens = Math.max(32, Math.ceil(request.prompt.length / 4));
-    const completionTokens = 160;
+    const estimate = estimateTokenUsage({
+      inputText: request.prompt,
+      expectedOutputTokens: 160
+    });
 
     return {
       content: [
@@ -20,9 +23,9 @@ export class MockProvider implements LlmProvider {
         "- Replace this provider with a real LLM integration.",
         "- Preserve deterministic artifact layout."
       ].join("\n"),
-      promptTokens,
-      completionTokens,
-      estimatedCostUsd: Number(((promptTokens + completionTokens) * 0.000002).toFixed(4))
+      promptTokens: estimate.estimatedInputTokens,
+      completionTokens: estimate.estimatedOutputTokens,
+      estimatedCostUsd: estimate.estimatedCostUsd
     };
   }
 }

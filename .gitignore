@@ -1,9 +1,11 @@
 node_modules/
 dist/
+packages/*/dist/
 coverage/
 .turbo/
 .DS_Store
 *.log
+*.tsbuildinfo
 .env
 .env.local
 .idea/
