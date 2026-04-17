@@ -21,8 +21,6 @@ afterEach(async () => {
 async function createTempWorkspace(): Promise<string> {
   const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-cli-"));
   tempDirs.push(root);
-  await mkdir(path.join(root, "config"), { recursive: true });
-  await copyFile(exampleConfig, path.join(root, "config", "ethereal-claw.config.example.yaml"));
   return root;
 }
 
@@ -49,6 +47,8 @@ describe("CLI smoke", () => {
 
   it("ideate writes feature artifacts and a run log with budget data", async () => {
     const root = await createTempWorkspace();
+    await mkdir(path.join(root, "config"), { recursive: true });
+    await copyFile(exampleConfig, path.join(root, "config", "ethereal-claw.config.example.yaml"));
 
     const { stdout } = await runCli(root, ["ideate", "Add secure login audit history", "--dry-run"]);
     const parsed = JSON.parse(stdout.trim());

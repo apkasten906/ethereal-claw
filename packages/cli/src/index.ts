@@ -46,4 +46,8 @@ program.addCommand(createTestCommand());
 program.addCommand(createReviewCommand());
 program.addCommand(createRunCommand());
 
-program.parseAsync(process.argv);
+await program.parseAsync(process.argv).catch((error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error);
+  process.stderr.write(`${message}\n`);
+  process.exitCode = 1;
+});

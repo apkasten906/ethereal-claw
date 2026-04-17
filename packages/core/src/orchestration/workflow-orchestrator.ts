@@ -66,7 +66,7 @@ export class WorkflowOrchestrator {
   async plan(options: StageOptions): Promise<RunResult> {
     this.resetStageState();
     const startedAt = nowUtcIso();
-    const featureSlug = options.featureSlug ?? slugify(options.request);
+    const featureSlug = this.resolveFeatureSlug(options);
     const plan = await this.agents.planner.run(options.request);
     this.recordExecution("planner", plan, "plan");
 
@@ -79,7 +79,7 @@ export class WorkflowOrchestrator {
   async implement(options: StageOptions): Promise<RunResult> {
     this.resetStageState();
     const startedAt = nowUtcIso();
-    const featureSlug = options.featureSlug ?? slugify(options.request);
+    const featureSlug = this.resolveFeatureSlug(options);
     const result = await this.agents.implementer.run(options.request);
     this.recordExecution("implementer", result, "implement");
 
@@ -91,7 +91,7 @@ export class WorkflowOrchestrator {
   async test(options: StageOptions): Promise<RunResult> {
     this.resetStageState();
     const startedAt = nowUtcIso();
-    const featureSlug = options.featureSlug ?? slugify(options.request);
+    const featureSlug = this.resolveFeatureSlug(options);
     const result = await this.agents.tester.run(options.request);
     this.recordExecution("tester", result, "test");
 
@@ -104,7 +104,7 @@ export class WorkflowOrchestrator {
   async review(options: StageOptions): Promise<RunResult> {
     this.resetStageState();
     const startedAt = nowUtcIso();
-    const featureSlug = options.featureSlug ?? slugify(options.request);
+    const featureSlug = this.resolveFeatureSlug(options);
     const result = await this.agents.reviewer.run(options.request);
     this.recordExecution("reviewer", result, "review");
 
@@ -129,7 +129,7 @@ export class WorkflowOrchestrator {
 
   private buildFeature(options: StageOptions): FeatureRecord {
     const title = options.title ?? options.request;
-    const slug = options.featureSlug ?? `feature-${slugify(title)}`;
+    const slug = this.resolveFeatureSlug(options, title);
     const timestamp = nowUtcIso();
 
     return {
@@ -140,6 +140,10 @@ export class WorkflowOrchestrator {
       createdAt: timestamp,
       updatedAt: timestamp
     };
+  }
+
+  private resolveFeatureSlug(options: StageOptions, title = options.title ?? options.request): string {
+    return options.featureSlug ?? `feature-${slugify(title)}`;
   }
 
   private resetStageState(): void {

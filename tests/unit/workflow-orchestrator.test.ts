@@ -60,6 +60,24 @@ describe("WorkflowOrchestrator", () => {
     await expect(access(path.join(root, "runs"))).resolves.toBeUndefined();
   });
 
+  it("uses a consistent default feature slug across stages", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    const planResult = await orchestrator.plan({
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    const implementResult = await orchestrator.implement({
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    expect(planResult.run.featureSlug).toBe("feature-refresh-tokens-for-admins");
+    expect(implementResult.run.featureSlug).toBe("feature-refresh-tokens-for-admins");
+  });
+
   it("records distinct start and completion timestamps", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
     tempDirs.push(root);

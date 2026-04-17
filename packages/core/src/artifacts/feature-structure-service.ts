@@ -1,13 +1,13 @@
 import path from "node:path";
 import { dump } from "js-yaml";
 import type { FeatureRecord } from "@ethereal-claw/shared";
-import { ensureDir, writeFileEnsured } from "../utils/file-system.js";
+import { assertFeatureSlug, ensureDir, resolveWithin, writeFileEnsured } from "../utils/file-system.js";
 
 export class FeatureStructureService {
   constructor(private readonly rootDir = process.cwd()) {}
 
   featureRoot(slug: string): string {
-    return path.join(this.rootDir, "features", slug);
+    return resolveWithin(this.rootDir, "features", assertFeatureSlug(slug));
   }
 
   async createWorkspace(feature: FeatureRecord): Promise<string> {
