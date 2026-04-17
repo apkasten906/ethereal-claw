@@ -1,0 +1,17 @@
+{
+  "name": "@ethereal-claw/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "ethereal-claw": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@ethereal-claw/core": "file:../core",
+    "commander": "^14.0.1"
+  }
+}
