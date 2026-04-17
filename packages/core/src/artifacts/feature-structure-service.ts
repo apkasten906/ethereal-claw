@@ -1,13 +1,18 @@
 import path from "node:path";
+import { load } from "js-yaml";
 import { dump } from "js-yaml";
 import type { FeatureRecord } from "@ethereal-claw/shared";
-import { assertFeatureSlug, ensureDir, resolveWithin, writeFileEnsured } from "../utils/file-system.js";
+import { assertFeatureSlug, ensureDir, readUtf8, resolveWithin, writeFileEnsured } from "../utils/file-system.js";
 
 export class FeatureStructureService {
   constructor(private readonly rootDir = process.cwd()) {}
 
   featureRoot(slug: string): string {
     return resolveWithin(this.rootDir, "features", assertFeatureSlug(slug));
+  }
+
+  featureMetadataPath(slug: string): string {
+    return resolveWithin(this.featureRoot(slug), "feature.yaml");
   }
 
   async createWorkspace(feature: FeatureRecord): Promise<string> {
@@ -36,5 +41,33 @@ export class FeatureStructureService {
     );
 
     return root;
+  }
+
+  async loadFeature(slug: string): Promise<FeatureRecord> {
+    const featurePath = this.featureMetadataPath(slug);
+    const parsed = load(await readUtf8(featurePath));
+
+    if (!this.isFeatureRecord(parsed)) {
+      throw new Error(`Invalid feature metadata in ${featurePath}`);
+    }
+
+    return parsed;
+  }
+
+  private isFeatureRecord(value: unknown): value is FeatureRecord {
+    if (!value || typeof value !== "object") {
+      return false;
+    }
+
+    const record = value as Record<string, unknown>;
+
+    return (
+      typeof record.slug === "string" &&
+      typeof record.title === "string" &&
+      typeof record.request === "string" &&
+      typeof record.status === "string" &&
+      typeof record.createdAt === "string" &&
+      typeof record.updatedAt === "string"
+    );
   }
 }

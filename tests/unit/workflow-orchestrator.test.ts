@@ -65,16 +65,17 @@ describe("WorkflowOrchestrator", () => {
     tempDirs.push(root);
 
     const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
-    const planResult = await orchestrator.plan({
+    const ideateResult = await orchestrator.ideate({
       request: "refresh tokens for admins",
       dryRun: true
     });
     const implementResult = await orchestrator.implement({
+      featureSlug: ideateResult.run.featureSlug,
       request: "refresh tokens for admins",
       dryRun: true
     });
 
-    expect(planResult.run.featureSlug).toBe("feature-refresh-tokens-for-admins");
+    expect(ideateResult.run.featureSlug).toBe("feature-refresh-tokens-for-admins");
     expect(implementResult.run.featureSlug).toBe("feature-refresh-tokens-for-admins");
   });
 
@@ -83,6 +84,11 @@ describe("WorkflowOrchestrator", () => {
     tempDirs.push(root);
 
     const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
     const result = await orchestrator.plan({
       featureSlug: "feature-auth-refresh",
       request: "refresh tokens for admins",
@@ -97,6 +103,11 @@ describe("WorkflowOrchestrator", () => {
     tempDirs.push(root);
 
     const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
     const result = await orchestrator.plan({
       featureSlug: "feature-auth-refresh",
       request: "refresh tokens for admins",
@@ -109,5 +120,20 @@ describe("WorkflowOrchestrator", () => {
     const runLog = JSON.parse(runLogRaw) as { startedAt: string; completedAt: string };
     expect(runLog.startedAt).toBe(result.run.startedAt);
     expect(runLog.completedAt).toBe(result.run.completedAt);
+  });
+
+  it("requires an existing feature workspace before non-ideate stages", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+
+    await expect(
+      orchestrator.plan({
+        featureSlug: "feature-auth-refresh",
+        request: "refresh tokens for admins",
+        dryRun: true
+      })
+    ).rejects.toThrow('Feature workspace "feature-auth-refresh" does not exist. Run "ethereal-claw ideate" first or provide a valid feature slug.');
   });
 });

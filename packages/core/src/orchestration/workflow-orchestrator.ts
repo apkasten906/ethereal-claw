@@ -1,3 +1,4 @@
+import { access } from "node:fs/promises";
 import path from "node:path";
 import type { AgentExecution, FeatureRecord, RunLog, WorkflowStage } from "@ethereal-claw/shared";
 import { BudgetManager } from "../budget/budget-manager.js";
@@ -67,6 +68,7 @@ export class WorkflowOrchestrator {
     this.resetStageState();
     const startedAt = nowUtcIso();
     const featureSlug = this.resolveFeatureSlug(options);
+    await this.ensureExistingFeatureWorkspace(featureSlug);
     const plan = await this.agents.planner.run(options.request);
     this.recordExecution("planner", plan, "plan");
 
@@ -80,6 +82,7 @@ export class WorkflowOrchestrator {
     this.resetStageState();
     const startedAt = nowUtcIso();
     const featureSlug = this.resolveFeatureSlug(options);
+    await this.ensureExistingFeatureWorkspace(featureSlug);
     const result = await this.agents.implementer.run(options.request);
     this.recordExecution("implementer", result, "implement");
 
@@ -92,6 +95,7 @@ export class WorkflowOrchestrator {
     this.resetStageState();
     const startedAt = nowUtcIso();
     const featureSlug = this.resolveFeatureSlug(options);
+    await this.ensureExistingFeatureWorkspace(featureSlug);
     const result = await this.agents.tester.run(options.request);
     this.recordExecution("tester", result, "test");
 
@@ -105,6 +109,7 @@ export class WorkflowOrchestrator {
     this.resetStageState();
     const startedAt = nowUtcIso();
     const featureSlug = this.resolveFeatureSlug(options);
+    await this.ensureExistingFeatureWorkspace(featureSlug);
     const result = await this.agents.reviewer.run(options.request);
     this.recordExecution("reviewer", result, "review");
 
@@ -148,6 +153,18 @@ export class WorkflowOrchestrator {
   private resetStageState(): void {
     this.usage.reset();
     this.budget.reset();
+  }
+
+  private async ensureExistingFeatureWorkspace(featureSlug: string): Promise<void> {
+    const featurePath = this.featureStructure.featureMetadataPath(featureSlug);
+
+    try {
+      await access(featurePath);
+    } catch {
+      throw new Error(
+        `Feature workspace "${featureSlug}" does not exist. Run "ethereal-claw ideate" first or provide a valid feature slug.`
+      );
+    }
   }
 
   private recordExecution(agent: AgentExecution["agent"], result: AgentResult, stage: WorkflowStage): void {

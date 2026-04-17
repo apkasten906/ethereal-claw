@@ -68,4 +68,17 @@ describe("CLI smoke", () => {
     expect(runLog.executions[0]).toHaveProperty("estimatedCostUsd");
     expect(runLog.dryRun).toBe(true);
   });
+
+  it("loads the saved feature request for later stages when --request is omitted", async () => {
+    const root = await createTempWorkspace();
+
+    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run"]);
+    const { stdout } = await runCli(root, ["plan", "feature-add-secure-login-audit-history", "--dry-run"]);
+    const parsed = JSON.parse(stdout.trim());
+
+    expect(parsed.featureSlug).toBe("feature-add-secure-login-audit-history");
+    await expect(
+      access(path.join(root, "features", "feature-add-secure-login-audit-history", "plan.md"))
+    ).resolves.toBeUndefined();
+  });
 });

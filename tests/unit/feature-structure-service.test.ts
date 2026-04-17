@@ -51,4 +51,24 @@ describe("FeatureStructureService", () => {
     expect(featureYaml).toContain("title: 'Auth: Refresh #1'");
     expect(featureYaml).toContain("request: 'refresh tokens for admins: phase #1'");
   });
+
+  it("loads saved feature metadata", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-"));
+    tempDirs.push(root);
+
+    const service = new FeatureStructureService(root);
+    await service.createWorkspace({
+      slug: "feature-auth-refresh",
+      title: "Auth Refresh",
+      request: "refresh tokens for admins",
+      status: "draft",
+      createdAt: "2026-04-17T00:00:00.000Z",
+      updatedAt: "2026-04-17T00:00:00.000Z"
+    });
+
+    await expect(service.loadFeature("feature-auth-refresh")).resolves.toMatchObject({
+      slug: "feature-auth-refresh",
+      request: "refresh tokens for admins"
+    });
+  });
 });

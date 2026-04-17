@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { createOrchestrator } from "./command-support.js";
+import { createOrchestrator, resolveStageRequest } from "./command-support.js";
 import { printJson } from "../presentation/console-output.js";
 
 export function createRunCommand(): Command {
@@ -10,9 +10,10 @@ export function createRunCommand(): Command {
     .option("--dry-run", "record a dry run", false)
     .action(async (featureSlug: string, options: { request: string; dryRun: boolean }) => {
       const orchestrator = await createOrchestrator();
+      const request = await resolveStageRequest(featureSlug, options.request);
       const results = await orchestrator.run({
         featureSlug,
-        request: options.request || featureSlug,
+        request,
         dryRun: options.dryRun
       });
       printJson(results.map((result) => result.run));

@@ -1,4 +1,4 @@
-import { GitHubModelProvider, loadConfig, MockProvider, OpenAiProvider, WorkflowOrchestrator } from "@ethereal-claw/core";
+import { FeatureStructureService, GitHubModelProvider, loadConfig, MockProvider, OpenAiProvider, WorkflowOrchestrator } from "@ethereal-claw/core";
 
 export async function createOrchestrator(): Promise<WorkflowOrchestrator> {
   const config = await loadConfig();
@@ -11,4 +11,21 @@ export async function createOrchestrator(): Promise<WorkflowOrchestrator> {
         : new MockProvider();
 
   return new WorkflowOrchestrator(provider, config);
+}
+
+export async function resolveStageRequest(featureSlug: string, requestOverride: string): Promise<string> {
+  if (requestOverride) {
+    return requestOverride;
+  }
+
+  const featureStructure = new FeatureStructureService(process.cwd());
+  const feature = await featureStructure.loadFeature(featureSlug);
+
+  if (!feature.request.trim()) {
+    throw new Error(
+      `Feature workspace "${featureSlug}" is missing a saved request. Re-run "ethereal-claw ideate" or pass --request.`
+    );
+  }
+
+  return feature.request;
 }

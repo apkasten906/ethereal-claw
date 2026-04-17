@@ -7,10 +7,10 @@ Build a **CLI-first orchestration layer** for an AI-assisted software developmen
 The tool should let you issue commands like:
 
 - `ethereal-claw ideate "multi-tenant auth for admin portal"`
-- `ethereal-claw plan feature/auth-refresh`
-- `ethereal-claw implement feature/auth-refresh`
-- `ethereal-claw test feature/auth-refresh`
-- `ethereal-claw review feature/auth-refresh`
+- `ethereal-claw plan feature-auth-refresh`
+- `ethereal-claw implement feature-auth-refresh`
+- `ethereal-claw test feature-auth-refresh`
+- `ethereal-claw review feature-auth-refresh`
 
 The orchestration layer coordinates multiple agents so they work toward **BDD-style acceptance criteria** and produce auditable artifacts.
 
