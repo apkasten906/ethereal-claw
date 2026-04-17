@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "type": "module",
   "bin": {
-    "ethereal-claw": "dist/index.js"
+    "ethereal-claw": "dist/index.js",
+    "ethereal": "dist/index.js",
+    "ec": "dist/index.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

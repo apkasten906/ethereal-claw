@@ -24,15 +24,52 @@ npm run test
 npm run cli -- ideate "multi-tenant auth for admin portal"
 ```
 
+Installed binaries:
+
+- `ethereal`
+- `ec`
+- `ethereal-claw`
+
+## Local CLI Use
+
+Immediate repo-local execution:
+
+```bash
+npm run ethereal -- ideate "multi-tenant auth for admin portal"
+npm run ec -- plan feature-auth-refresh
+```
+
+To enable bare local commands in your shell:
+
+```bash
+npm run build
+npm run link:cli
+ethereal --help
+ec --help
+```
+
+To remove the global link later:
+
+```bash
+npm run unlink:cli
+```
+
 ## Commands
 
-- `ethereal-claw init`
-- `ethereal-claw ideate "<request>"`
-- `ethereal-claw plan <feature-slug>`
-- `ethereal-claw implement <feature-slug>`
-- `ethereal-claw test <feature-slug>`
-- `ethereal-claw review <feature-slug>`
-- `ethereal-claw run <feature-slug>`
+- `ethereal init`
+- `ec init`
+- `ethereal ideate "<request>"`
+- `ec ideate "<request>"`
+- `ethereal plan <feature-slug>`
+- `ec plan <feature-slug>`
+- `ethereal implement <feature-slug>`
+- `ec implement <feature-slug>`
+- `ethereal test <feature-slug>`
+- `ec test <feature-slug>`
+- `ethereal review <feature-slug>`
+- `ec review <feature-slug>`
+- `ethereal run <feature-slug>`
+- `ec run <feature-slug>`
 
 ## Versioning
 
