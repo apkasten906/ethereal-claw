@@ -44,6 +44,27 @@ describe("ArtifactService", () => {
     ).rejects.toThrow('Invalid feature slug: "../escape"');
   });
 
+  it("rejects path traversal in run ids", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-artifacts-"));
+    tempDirs.push(root);
+
+    const service = new ArtifactService(root);
+
+    await expect(
+      service.writeRunLog({
+        id: "../escape",
+        featureSlug: "feature-ok",
+        stage: "plan",
+        startedAt: "2026-04-17T00:00:00.000Z",
+        completedAt: "2026-04-17T00:00:01.000Z",
+        success: true,
+        dryRun: true,
+        executions: [],
+        notes: []
+      })
+    ).rejects.toThrow('Invalid run id: "../escape"');
+  });
+
   it("rejects path traversal in relative artifact paths", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-artifacts-"));
     tempDirs.push(root);

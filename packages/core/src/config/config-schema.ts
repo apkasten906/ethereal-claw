@@ -1,11 +1,19 @@
 import { z } from "zod";
 
+const defaultBudget = {
+  runBudgetUsd: 5,
+  warnAtPercent: 50,
+  confirmAtPercent: 75,
+  stopAtPercent: 90,
+  hardCapPercent: 100
+};
+
 const budgetSchema = z.object({
-  runBudgetUsd: z.number().positive().default(5),
-  warnAtPercent: z.number().min(1).max(100).default(50),
-  confirmAtPercent: z.number().min(1).max(100).default(75),
-  stopAtPercent: z.number().min(1).max(100).default(90),
-  hardCapPercent: z.number().min(1).max(100).default(100)
+  runBudgetUsd: z.number().positive().default(defaultBudget.runBudgetUsd),
+  warnAtPercent: z.number().min(1).max(100).default(defaultBudget.warnAtPercent),
+  confirmAtPercent: z.number().min(1).max(100).default(defaultBudget.confirmAtPercent),
+  stopAtPercent: z.number().min(1).max(100).default(defaultBudget.stopAtPercent),
+  hardCapPercent: z.number().min(1).max(100).default(defaultBudget.hardCapPercent)
 }).superRefine((budget, context) => {
   const orderedThresholds = [
     ["warnAtPercent", budget.warnAtPercent],
@@ -30,7 +38,7 @@ const budgetSchema = z.object({
 
 export const clawConfigSchema = z.object({
   provider: z.enum(["mock", "openai", "github"]).default("mock"),
-  budget: budgetSchema,
+  budget: budgetSchema.default(defaultBudget),
   providers: z.object({
     openai: z.object({
       model: z.string().default("gpt-5.4-mini")
