@@ -11,7 +11,7 @@ const tempDirs: string[] = [];
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const tsxCli = path.join(repoRoot, "node_modules", "tsx", "dist", "cli.mjs");
 const cliEntry = path.join(repoRoot, "packages", "cli", "src", "index.ts");
-const exampleConfig = path.join(repoRoot, "config", "ethereal-claw.config.example.yaml");
+const exampleConfig = path.join(repoRoot, "packages", "core", "config", "ethereal-claw.config.example.yaml");
 
 afterEach(async () => {
   await Promise.all(tempDirs.map((dir) => rm(dir, { recursive: true, force: true })));
@@ -48,7 +48,7 @@ describe("CLI smoke", () => {
   it("ideate writes feature artifacts and a run log with budget data", async () => {
     const root = await createTempWorkspace();
     await mkdir(path.join(root, "config"), { recursive: true });
-    await copyFile(exampleConfig, path.join(root, "config", "ethereal-claw.config.example.yaml"));
+    await copyFile(exampleConfig, path.join(root, "config", "ethereal-claw.config.yaml"));
 
     const { stdout } = await runCli(root, ["ideate", "Add secure login audit history", "--dry-run"]);
     const parsed = JSON.parse(stdout.trim());

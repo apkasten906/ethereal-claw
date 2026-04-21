@@ -136,4 +136,18 @@ describe("WorkflowOrchestrator", () => {
       })
     ).rejects.toThrow('Feature workspace "feature-auth-refresh" does not exist. Run "ethereal-claw ideate" first or provide a valid feature slug.');
   });
+
+  it("rejects feature requests that cannot produce a default slug", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+
+    await expect(
+      orchestrator.ideate({
+        request: "!!!",
+        dryRun: true
+      })
+    ).rejects.toThrow("Feature request must contain at least one alphanumeric character to generate a slug.");
+  });
 });

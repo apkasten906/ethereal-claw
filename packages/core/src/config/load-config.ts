@@ -7,10 +7,10 @@ import { readUtf8 } from "../utils/file-system.js";
 
 const defaultConfigPath = path.join(process.cwd(), "config", "ethereal-claw.config.yaml");
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-const bundledExampleConfigPath = path.resolve(moduleDir, "../../config/ethereal-claw.config.example.yaml");
+export const bundledConfigExamplePath = path.resolve(moduleDir, "../../config/ethereal-claw.config.example.yaml");
 
 export async function loadConfig(configPath = defaultConfigPath): Promise<ClawConfig> {
-  const resolvedPath = existsSync(configPath) ? configPath : bundledExampleConfigPath;
+  const resolvedPath = existsSync(configPath) ? configPath : bundledConfigExamplePath;
   const raw = await readUtf8(resolvedPath);
   const parsed = load(raw) ?? {};
 

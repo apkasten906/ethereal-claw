@@ -147,7 +147,16 @@ export class WorkflowOrchestrator {
   }
 
   private resolveFeatureSlug(options: StageOptions, title = options.title ?? options.request): string {
-    return options.featureSlug ?? `feature-${slugify(title)}`;
+    if (options.featureSlug) {
+      return options.featureSlug;
+    }
+
+    const slug = slugify(title);
+    if (!slug) {
+      throw new Error("Feature request must contain at least one alphanumeric character to generate a slug.");
+    }
+
+    return `feature-${slug}`;
   }
 
   private resetStageState(): void {
