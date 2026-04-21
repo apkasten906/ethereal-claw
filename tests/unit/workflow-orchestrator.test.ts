@@ -32,21 +32,52 @@ describe("WorkflowOrchestrator", () => {
     tempDirs.push(root);
 
     const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
     const results = await orchestrator.run({
       featureSlug: "feature-auth-refresh",
       request: "refresh tokens for admins",
       dryRun: true
     });
 
-    expect(results).toHaveLength(5);
-    expect(results[0]?.run.executions).toHaveLength(2);
-    expect(results[1]?.run.executions).toHaveLength(1);
-    expect(results[4]?.run.executions).toHaveLength(1);
-    expect(results[0]?.run.executions[1]?.tier).toBe("low");
-    expect(results[4]?.run.executions[0]?.agent).toBe("reviewer");
+    expect(results).toHaveLength(4);
+    expect(results[0]?.run.stage).toBe("plan");
+    expect(results[0]?.run.executions).toHaveLength(1);
+    expect(results[3]?.run.executions).toHaveLength(1);
+    expect(results[3]?.run.executions[0]?.agent).toBe("reviewer");
 
     const runFiles = await readdir(path.join(root, "runs"));
     expect(runFiles).toHaveLength(5);
+  });
+
+  it("does not rerun ideation or rewrite feature metadata during a full run", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-auth-refresh",
+      title: "Auth Refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    const featurePath = path.join(root, "features", "feature-auth-refresh", "feature.yaml");
+    const beforeRun = await readFile(featurePath, "utf8");
+
+    const results = await orchestrator.run({
+      featureSlug: "feature-auth-refresh",
+      request: "different request override",
+      dryRun: true
+    });
+
+    const afterRun = await readFile(featurePath, "utf8");
+
+    expect(results.map((result) => result.run.stage)).toEqual(["plan", "implement", "test", "review"]);
+    expect(afterRun).toBe(beforeRun);
   });
 
   it("creates runtime directories during init", async () => {

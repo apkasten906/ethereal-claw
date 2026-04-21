@@ -121,14 +121,14 @@ export class WorkflowOrchestrator {
   }
 
   async run(options: StageOptions): Promise<RunResult[]> {
-    const feature = this.buildFeature(options);
+    const featureSlug = this.resolveFeatureSlug(options);
+    await this.ensureExistingFeatureWorkspace(featureSlug);
 
     return [
-      await this.ideate({ ...options, featureSlug: feature.slug, title: feature.title }),
-      await this.plan({ ...options, featureSlug: feature.slug, title: feature.title }),
-      await this.implement({ ...options, featureSlug: feature.slug, title: feature.title }),
-      await this.test({ ...options, featureSlug: feature.slug, title: feature.title }),
-      await this.review({ ...options, featureSlug: feature.slug, title: feature.title })
+      await this.plan({ ...options, featureSlug }),
+      await this.implement({ ...options, featureSlug }),
+      await this.test({ ...options, featureSlug }),
+      await this.review({ ...options, featureSlug })
     ];
   }
 

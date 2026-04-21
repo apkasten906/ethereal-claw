@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { access, copyFile, mkdir, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import os from "node:os";
@@ -9,7 +10,14 @@ import { afterEach, describe, expect, it } from "vitest";
 const execFileAsync = promisify(execFile);
 const tempDirs: string[] = [];
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-const tsxCli = path.join(repoRoot, "node_modules", "tsx", "dist", "cli.mjs");
+const tsxPackage = JSON.parse(
+  readFileSync(path.join(repoRoot, "node_modules", "tsx", "package.json"), "utf8")
+) as { bin: string | Record<string, string> };
+const tsxBinPath = typeof tsxPackage.bin === "string" ? tsxPackage.bin : tsxPackage.bin.tsx;
+if (!tsxBinPath) {
+  throw new Error("Unable to resolve the tsx package bin path.");
+}
+const tsxCli = path.join(repoRoot, "node_modules", "tsx", tsxBinPath);
 const cliEntry = path.join(repoRoot, "packages", "cli", "src", "index.ts");
 const exampleConfig = path.join(repoRoot, "packages", "core", "config", "ethereal-claw.config.example.yaml");
 
@@ -80,5 +88,18 @@ describe("CLI smoke", () => {
     await expect(
       access(path.join(root, "features", "feature-add-secure-login-audit-history", "plan.md"))
     ).resolves.toBeUndefined();
+  });
+
+  it("runs existing feature stages without rerunning ideation", async () => {
+    const root = await createTempWorkspace();
+
+    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run"]);
+    const { stdout } = await runCli(root, ["run", "feature-add-secure-login-audit-history", "--dry-run"]);
+    const parsed = JSON.parse(stdout.trim());
+
+    expect(parsed.map((run: { stage: string }) => run.stage)).toEqual(["plan", "implement", "test", "review"]);
+
+    const runFiles = await readdir(path.join(root, "runs"));
+    expect(runFiles).toHaveLength(5);
   });
 });

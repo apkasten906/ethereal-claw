@@ -916,19 +916,17 @@ Expose two entry points that run the same CLI:
 - `ethereal` as the primary command
 - `ec` as the short alias
 
-In npm package terms, that means the CLI package should publish both binaries and point them to the same compiled entry file.ts import { Command } from 'commander';
+In npm package terms, that means the CLI package should publish both binaries and point them to the same compiled entry file:
 
-const program = new Command();
-
-program .name('ethereal-claw') .description('CLI orchestration layer for AI-assisted SDLC') .version('0.1.0');
-
-program .command('init') .description('Initialize CLAW in the current repository') .action(() => { console.log('Initialize command not implemented yet.'); });
-
-program .command('ideate') .description('Create a feature ideation artifact from a raw prompt') .argument('', 'Feature prompt') .action((prompt: string) => { console.log(`Ideate command not implemented yet: ${prompt}`); });
-
-program.parse();
-
-````
+```json
+{
+  "bin": {
+    "ethereal-claw": "dist/index.js",
+    "ethereal": "dist/index.js",
+    "ec": "dist/index.js"
+  }
+}
+```
 
 ## `packages/core/src/agents/base-agent.ts`
 ```ts
@@ -950,7 +948,7 @@ export interface BaseAgent {
   readonly name: string;
   execute(input: AgentInput): Promise<AgentOutput>;
 }
-````
+```
 
 ## `packages/core/src/providers/llm-provider.ts`
 
