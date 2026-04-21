@@ -1,7 +1,7 @@
 import { access, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { WorkflowOrchestrator } from "../../packages/core/src/orchestration/workflow-orchestrator.js";
 import { MockProvider } from "../../packages/core/src/providers/mock-provider.js";
 
@@ -166,6 +166,38 @@ describe("WorkflowOrchestrator", () => {
         dryRun: true
       })
     ).rejects.toThrow('Feature workspace "feature-auth-refresh" does not exist. Run "ethereal-claw ideate" first or provide a valid feature slug.');
+  });
+
+  it("preserves unexpected filesystem errors when checking feature workspaces", async () => {
+    vi.resetModules();
+    vi.doMock("node:fs/promises", async () => {
+      const actual = await vi.importActual<typeof import("node:fs/promises")>("node:fs/promises");
+
+      return {
+        ...actual,
+        access: vi.fn().mockRejectedValue(Object.assign(new Error("permission denied"), { code: "EPERM" }))
+      };
+    });
+
+    const [{ WorkflowOrchestrator: MockedWorkflowOrchestrator }, { MockProvider: MockedProvider }] = await Promise.all([
+      import("../../packages/core/src/orchestration/workflow-orchestrator.js"),
+      import("../../packages/core/src/providers/mock-provider.js")
+    ]);
+
+    try {
+      const orchestrator = new MockedWorkflowOrchestrator(new MockedProvider(), createConfig(), process.cwd());
+
+      await expect(
+        orchestrator.plan({
+          featureSlug: "feature-auth-refresh",
+          request: "refresh tokens for admins",
+          dryRun: true
+        })
+      ).rejects.toThrow("permission denied");
+    } finally {
+      vi.doUnmock("node:fs/promises");
+      vi.resetModules();
+    }
   });
 
   it("rejects feature requests that cannot produce a default slug", async () => {

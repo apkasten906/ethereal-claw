@@ -170,7 +170,11 @@ export class WorkflowOrchestrator {
 
     try {
       await access(featurePath);
-    } catch {
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        throw error;
+      }
+
       throw new Error(
         `Feature workspace "${featureSlug}" does not exist. Run "ethereal-claw ideate" first or provide a valid feature slug.`
       );

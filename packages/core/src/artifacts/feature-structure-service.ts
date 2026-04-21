@@ -4,6 +4,15 @@ import { dump } from "js-yaml";
 import type { FeatureRecord } from "@ethereal-claw/shared";
 import { assertFeatureSlug, ensureDir, readUtf8, resolveWithin, writeFileEnsured } from "../utils/file-system.js";
 
+const featureStatuses = new Set<FeatureRecord["status"]>([
+  "draft",
+  "ideated",
+  "planned",
+  "implemented",
+  "tested",
+  "reviewed"
+]);
+
 export class FeatureStructureService {
   constructor(private readonly rootDir = process.cwd()) {}
 
@@ -66,6 +75,7 @@ export class FeatureStructureService {
       typeof record.title === "string" &&
       typeof record.request === "string" &&
       typeof record.status === "string" &&
+      featureStatuses.has(record.status as FeatureRecord["status"]) &&
       typeof record.createdAt === "string" &&
       typeof record.updatedAt === "string"
     );

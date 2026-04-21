@@ -1,4 +1,4 @@
-import { access, mkdtemp, readFile, rm } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -70,5 +70,28 @@ describe("FeatureStructureService", () => {
       slug: "feature-auth-refresh",
       request: "refresh tokens for admins"
     });
+  });
+
+  it("rejects feature metadata with an invalid status", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-"));
+    tempDirs.push(root);
+
+    await mkdir(path.join(root, "features", "feature-auth-refresh"), { recursive: true });
+    await writeFile(
+      path.join(root, "features", "feature-auth-refresh", "feature.yaml"),
+      [
+        "slug: feature-auth-refresh",
+        "title: Auth Refresh",
+        "request: refresh tokens for admins",
+        "status: shipped",
+        "createdAt: '2026-04-17T00:00:00.000Z'",
+        "updatedAt: '2026-04-17T00:00:00.000Z'",
+        ""
+      ].join("\n")
+    );
+
+    const service = new FeatureStructureService(root);
+
+    await expect(service.loadFeature("feature-auth-refresh")).rejects.toThrow("Invalid feature metadata");
   });
 });
