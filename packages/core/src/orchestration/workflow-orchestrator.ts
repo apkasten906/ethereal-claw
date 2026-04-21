@@ -11,7 +11,8 @@ import type { ClawConfig } from "../config/config-schema.js";
 import { GitService } from "../git/git-service.js";
 import { createLogger } from "../logging/logger.js";
 import type { LlmProvider } from "../providers/llm-provider.js";
-import { nowUtcIso, runId, slugify } from "../utils/timestamps.js";
+import { slugify } from "../utils/slugs.js";
+import { nowUtcIso, runId } from "../utils/timestamps.js";
 import type { RunResult } from "./run-result.js";
 
 export interface StageOptions {

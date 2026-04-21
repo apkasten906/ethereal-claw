@@ -17,6 +17,7 @@
     "@ethereal-claw/shared": "file:../shared",
     "js-yaml": "^4.1.0",
     "pino": "^9.9.0",
+    "slugify": "^1.6.9",
     "zod": "^4.1.11"
   }
 }
