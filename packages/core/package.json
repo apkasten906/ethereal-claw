@@ -17,7 +17,7 @@
   "dependencies": {
     "@ethereal-claw/shared": "file:../shared",
     "js-yaml": "^4.1.0",
-    "pino": "^9.9.0",
+    "pino": "^10.3.1",
     "slugify": "^1.6.9",
     "zod": "^4.1.11"
   }
