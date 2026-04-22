@@ -121,9 +121,8 @@ describe("Markdown links", () => {
           continue;
         }
 
-        const targetMarkdown = await readFile(targetFile, "utf8");
         const cached = anchorCache.get(targetFile);
-        const anchors = cached ?? collectHeadingAnchors(targetMarkdown);
+        const anchors = cached ?? collectHeadingAnchors(await readFile(targetFile, "utf8"));
         if (!cached) {
           anchorCache.set(targetFile, anchors);
         }

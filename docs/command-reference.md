@@ -15,7 +15,9 @@ Related docs:
 
 ## Shared Behavior
 
-All workflow commands print JSON to stdout. Core logs are written to stderr so JSON output remains script-friendly.
+The stage commands (`ideate`, `plan`, `implement`, `test`, `review`, and `run`) print JSON to stdout. Core logs are written to stderr so JSON output remains script-friendly.
+
+`init` prints human-readable status messages to stdout because it is a setup command rather than a workflow stage.
 
 Every stage writes a run log to both:
 
