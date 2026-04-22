@@ -55,7 +55,6 @@ describe("CLI smoke", () => {
 
   it("init does not overwrite existing config", async () => {
     const root = await createTempWorkspace();
-    tempDirs.push(root);
 
     await mkdir(path.join(root, "config"), { recursive: true });
     const existing = path.join(root, "config", "ethereal-claw.config.yaml");
