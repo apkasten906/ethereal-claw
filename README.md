@@ -15,6 +15,13 @@ Initial scaffold for `0.1.0`.
 - `runs/`: execution logs and run artifacts
 - `docs/`: architecture, workflow, prompts, command reference
 
+## Documentation
+
+- [Command reference](docs/command-reference.md): exact CLI syntax, options, preconditions, and artifacts.
+- [Workflow](docs/workflow.md): stage order, handoffs, review gates, and artifact flow.
+- [Architecture](docs/architecture.md): package boundaries and runtime flow.
+- Prompt docs: [ideation](docs/prompts/ideation.md), [story writer](docs/prompts/story-writer.md), [planner](docs/prompts/planner.md), [implementer](docs/prompts/implementer.md), [tester](docs/prompts/tester.md), and [reviewer](docs/prompts/reviewer.md).
+
 ## Quick Start
 
 ```bash
@@ -56,20 +63,19 @@ npm run unlink:cli
 
 ## Commands
 
-- `ethereal init`
-- `ec init`
-- `ethereal ideate "<request>"`
-- `ec ideate "<request>"`
-- `ethereal plan <feature-slug>`
-- `ec plan <feature-slug>`
-- `ethereal implement <feature-slug>`
-- `ec implement <feature-slug>`
-- `ethereal test <feature-slug>`
-- `ec test <feature-slug>`
-- `ethereal review <feature-slug>`
-- `ec review <feature-slug>`
-- `ethereal run <feature-slug>`
-- `ec run <feature-slug>`
+`ethereal` is the primary command and `ec` is the short alias. The repo also exposes `ethereal-claw` as a binary name.
+
+| Command | Purpose |
+| --- | --- |
+| `ethereal init` | Create baseline runtime directories and local config. |
+| `ethereal ideate "<request>"` | Create a feature workspace from a rough request. |
+| `ethereal plan <feature-slug>` | Generate planning artifacts for an existing feature. |
+| `ethereal implement <feature-slug>` | Generate an implementation plan without modifying source code. |
+| `ethereal test <feature-slug>` | Generate test planning artifacts; this does not run the project test suite. |
+| `ethereal review <feature-slug>` | Generate review artifacts and unresolved questions. |
+| `ethereal run <feature-slug>` | Run `plan`, `implement`, `test`, and `review` for an existing feature. |
+
+See the [command reference](docs/command-reference.md) for syntax, options, outputs, and related workflow documentation.
 
 ## Versioning
 
