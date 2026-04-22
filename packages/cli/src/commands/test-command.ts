@@ -10,7 +10,7 @@ export function createTestCommand(): Command {
     .option("--dry-run", "record a dry run", false)
     .action(async (featureSlug: string, options: { request: string; dryRun: boolean }) => {
       const orchestrator = await createOrchestrator();
-      const request = await resolveStageRequest(featureSlug, options.request);
+      const request = await resolveStageRequest(featureSlug, options.request, orchestrator.rootDir);
       const result = await orchestrator.test({
         featureSlug,
         request,

@@ -260,5 +260,15 @@ describe("WorkflowOrchestrator", () => {
         dryRun: true
       })
     ).rejects.toThrow(/Budget (stop|hard-stop):/);
+
+    const runFiles = await readdir(path.join(root, "runs"));
+    expect(runFiles).toHaveLength(1);
+
+    const runLog = JSON.parse(
+      await readFile(path.join(root, "runs", runFiles[0] ?? ""), "utf8")
+    ) as { success: boolean; notes: string[] };
+
+    expect(runLog.success).toBe(false);
+    expect(runLog.notes.some((n) => n.startsWith("Error:"))).toBe(true);
   });
 });

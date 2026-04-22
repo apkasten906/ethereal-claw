@@ -34,7 +34,7 @@ export class WorkflowOrchestrator {
   constructor(
     private readonly provider: LlmProvider,
     private readonly config: ClawConfig,
-    private readonly rootDir = process.cwd()
+    readonly rootDir = process.cwd()
   ) {
     this.budget = new BudgetManager(config.budget);
     this.artifacts = new ArtifactService(this.rootDir);
@@ -52,17 +52,24 @@ export class WorkflowOrchestrator {
     const feature = this.buildFeature(options);
     await this.featureStructure.createWorkspace(feature);
 
-    const ideation = await this.agents.ideation.run(options.request);
-    this.recordExecution("ideation", ideation, "ideate");
+    try {
+      const ideation = await this.agents.ideation.run(options.request);
+      this.recordExecution("ideation", ideation, "ideate");
 
-    const storyDraft = await this.agents.story.run(options.request);
-    this.recordExecution("story", storyDraft, "ideate");
+      const storyDraft = await this.agents.story.run(options.request);
+      this.recordExecution("story", storyDraft, "ideate");
 
-    await this.artifacts.writeFeatureArtifact(feature.slug, "ideation.md", ideation.content);
-    await this.artifacts.writeFeatureArtifact(feature.slug, path.join("stories", "001-initial-story.md"), storyDraft.content);
-    await this.artifacts.writeFeatureArtifact(feature.slug, path.join("bdd", "001-initial.feature"), this.wrapGherkin(feature.title));
+      await this.artifacts.writeFeatureArtifact(feature.slug, "ideation.md", ideation.content);
+      await this.artifacts.writeFeatureArtifact(feature.slug, path.join("stories", "001-initial-story.md"), storyDraft.content);
+      await this.artifacts.writeFeatureArtifact(feature.slug, path.join("bdd", "001-initial.feature"), this.wrapGherkin(feature.title));
 
-    return this.finishRun(feature.slug, "ideate", startedAt, options.dryRun ?? false, ["Ideation artifacts generated."]);
+      return this.finishRun(feature.slug, "ideate", startedAt, options.dryRun ?? false, ["Ideation artifacts generated."]);
+    } catch (error) {
+      await this.finishRun(feature.slug, "ideate", startedAt, options.dryRun ?? false,
+        [`Error: ${error instanceof Error ? error.message : String(error)}`], false)
+        .catch((logError: unknown) => { this.logger.warn({ logError }, "failed to write error run log"); });
+      throw error;
+    }
   }
 
   async plan(options: StageOptions): Promise<RunResult> {
@@ -70,13 +77,21 @@ export class WorkflowOrchestrator {
     const startedAt = nowUtcIso();
     const featureSlug = this.resolveFeatureSlug(options);
     await this.ensureExistingFeatureWorkspace(featureSlug);
-    const plan = await this.agents.planner.run(options.request);
-    this.recordExecution("planner", plan, "plan");
 
-    await this.artifacts.writeFeatureArtifact(featureSlug, "plan.md", plan.content);
-    await this.artifacts.writeFeatureArtifact(featureSlug, path.join("implementation", "tasks.md"), this.defaultTasks());
+    try {
+      const plan = await this.agents.planner.run(options.request);
+      this.recordExecution("planner", plan, "plan");
 
-    return this.finishRun(featureSlug, "plan", startedAt, options.dryRun ?? false, ["Planning artifacts generated."]);
+      await this.artifacts.writeFeatureArtifact(featureSlug, "plan.md", plan.content);
+      await this.artifacts.writeFeatureArtifact(featureSlug, path.join("implementation", "tasks.md"), this.defaultTasks());
+
+      return this.finishRun(featureSlug, "plan", startedAt, options.dryRun ?? false, ["Planning artifacts generated."]);
+    } catch (error) {
+      await this.finishRun(featureSlug, "plan", startedAt, options.dryRun ?? false,
+        [`Error: ${error instanceof Error ? error.message : String(error)}`], false)
+        .catch((logError: unknown) => { this.logger.warn({ logError }, "failed to write error run log"); });
+      throw error;
+    }
   }
 
   async implement(options: StageOptions): Promise<RunResult> {
@@ -84,12 +99,20 @@ export class WorkflowOrchestrator {
     const startedAt = nowUtcIso();
     const featureSlug = this.resolveFeatureSlug(options);
     await this.ensureExistingFeatureWorkspace(featureSlug);
-    const result = await this.agents.implementer.run(options.request);
-    this.recordExecution("implementer", result, "implement");
 
-    await this.artifacts.writeFeatureArtifact(featureSlug, path.join("implementation", "change-summary.md"), result.content);
+    try {
+      const result = await this.agents.implementer.run(options.request);
+      this.recordExecution("implementer", result, "implement");
 
-    return this.finishRun(featureSlug, "implement", startedAt, options.dryRun ?? false, ["Implementation plan generated."]);
+      await this.artifacts.writeFeatureArtifact(featureSlug, path.join("implementation", "change-summary.md"), result.content);
+
+      return this.finishRun(featureSlug, "implement", startedAt, options.dryRun ?? false, ["Implementation plan generated."]);
+    } catch (error) {
+      await this.finishRun(featureSlug, "implement", startedAt, options.dryRun ?? false,
+        [`Error: ${error instanceof Error ? error.message : String(error)}`], false)
+        .catch((logError: unknown) => { this.logger.warn({ logError }, "failed to write error run log"); });
+      throw error;
+    }
   }
 
   async test(options: StageOptions): Promise<RunResult> {
@@ -97,13 +120,21 @@ export class WorkflowOrchestrator {
     const startedAt = nowUtcIso();
     const featureSlug = this.resolveFeatureSlug(options);
     await this.ensureExistingFeatureWorkspace(featureSlug);
-    const result = await this.agents.tester.run(options.request);
-    this.recordExecution("tester", result, "test");
 
-    await this.artifacts.writeFeatureArtifact(featureSlug, path.join("tests", "test-plan.md"), result.content);
-    await this.artifacts.writeFeatureArtifact(featureSlug, path.join("tests", "generated-tests.md"), this.defaultGeneratedTests());
+    try {
+      const result = await this.agents.tester.run(options.request);
+      this.recordExecution("tester", result, "test");
 
-    return this.finishRun(featureSlug, "test", startedAt, options.dryRun ?? false, ["Test artifacts generated."]);
+      await this.artifacts.writeFeatureArtifact(featureSlug, path.join("tests", "test-plan.md"), result.content);
+      await this.artifacts.writeFeatureArtifact(featureSlug, path.join("tests", "generated-tests.md"), this.defaultGeneratedTests());
+
+      return this.finishRun(featureSlug, "test", startedAt, options.dryRun ?? false, ["Test artifacts generated."]);
+    } catch (error) {
+      await this.finishRun(featureSlug, "test", startedAt, options.dryRun ?? false,
+        [`Error: ${error instanceof Error ? error.message : String(error)}`], false)
+        .catch((logError: unknown) => { this.logger.warn({ logError }, "failed to write error run log"); });
+      throw error;
+    }
   }
 
   async review(options: StageOptions): Promise<RunResult> {
@@ -111,13 +142,21 @@ export class WorkflowOrchestrator {
     const startedAt = nowUtcIso();
     const featureSlug = this.resolveFeatureSlug(options);
     await this.ensureExistingFeatureWorkspace(featureSlug);
-    const result = await this.agents.reviewer.run(options.request);
-    this.recordExecution("reviewer", result, "review");
 
-    await this.artifacts.writeFeatureArtifact(featureSlug, path.join("review", "consistency-review.md"), result.content);
-    await this.artifacts.writeFeatureArtifact(featureSlug, path.join("review", "code-review.md"), "Human review gate pending.\n");
+    try {
+      const result = await this.agents.reviewer.run(options.request);
+      this.recordExecution("reviewer", result, "review");
 
-    return this.finishRun(featureSlug, "review", startedAt, options.dryRun ?? false, ["Review artifacts generated."]);
+      await this.artifacts.writeFeatureArtifact(featureSlug, path.join("review", "consistency-review.md"), result.content);
+      await this.artifacts.writeFeatureArtifact(featureSlug, path.join("review", "code-review.md"), "Human review gate pending.\n");
+
+      return this.finishRun(featureSlug, "review", startedAt, options.dryRun ?? false, ["Review artifacts generated."]);
+    } catch (error) {
+      await this.finishRun(featureSlug, "review", startedAt, options.dryRun ?? false,
+        [`Error: ${error instanceof Error ? error.message : String(error)}`], false)
+        .catch((logError: unknown) => { this.logger.warn({ logError }, "failed to write error run log"); });
+      throw error;
+    }
   }
 
   async run(options: StageOptions): Promise<RunResult[]> {
@@ -208,7 +247,8 @@ export class WorkflowOrchestrator {
     stage: WorkflowStage,
     startedAt: string,
     dryRun: boolean,
-    notes: string[]
+    notes: string[],
+    success = true
   ): Promise<RunResult> {
     const branch = await this.git.currentBranch(this.rootDir);
     const run: RunLog = {
@@ -217,14 +257,14 @@ export class WorkflowOrchestrator {
       stage,
       startedAt,
       completedAt: nowUtcIso(),
-      success: true,
+      success,
       dryRun,
       executions: this.usage.all(),
       notes: branch ? [...notes, `branch=${branch}`] : notes
     };
 
     await this.artifacts.writeRunLog(run);
-    return { success: true, run };
+    return { success, run };
   }
 
   private wrapGherkin(title: string): string {

@@ -13,12 +13,12 @@ export async function createOrchestrator(): Promise<WorkflowOrchestrator> {
   return new WorkflowOrchestrator(provider, config);
 }
 
-export async function resolveStageRequest(featureSlug: string, requestOverride: string): Promise<string> {
+export async function resolveStageRequest(featureSlug: string, requestOverride: string, rootDir = process.cwd()): Promise<string> {
   if (requestOverride) {
     return requestOverride;
   }
 
-  const featureStructure = new FeatureStructureService(process.cwd());
+  const featureStructure = new FeatureStructureService(rootDir);
   const feature = await featureStructure.loadFeature(featureSlug);
 
   if (!feature.request.trim()) {
