@@ -49,10 +49,12 @@ export class WorkflowOrchestrator {
   async ideate(options: StageOptions): Promise<RunResult> {
     this.resetStageState();
     const startedAt = nowUtcIso();
-    const feature = this.buildFeature(options);
-    await this.featureStructure.createWorkspace(feature);
+    const feature = this.buildFeature(options);    
 
     try {
+
+      await this.featureStructure.createWorkspace(feature);
+      
       const ideation = await this.agents.ideation.run(options.request);
       this.recordExecution("ideation", ideation, "ideate");
 

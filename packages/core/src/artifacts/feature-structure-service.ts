@@ -1,6 +1,5 @@
 import path from "node:path";
-import { load } from "js-yaml";
-import { dump } from "js-yaml";
+import { load, dump } from "js-yaml";
 import type { FeatureRecord } from "@ethereal-claw/shared";
 import { assertFeatureSlug, ensureDir, readUtf8, resolveWithin, writeFileEnsured } from "../utils/file-system.js";
 
