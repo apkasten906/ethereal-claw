@@ -2,7 +2,7 @@
 
 Generate unit, integration, and manual testing guidance mapped back to acceptance criteria.
 
-Related command: [`ethereal test <feature-slug>`](../command-reference.md#ethereal-test-feature-slug)
+Related command: [`ethereal test <feature-slug>`](../command-reference.md)
 
 ## Responsibility
 

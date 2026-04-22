@@ -2,7 +2,7 @@
 
 Produce a file-level implementation plan that stays within project architecture guardrails.
 
-Related command: [`ethereal implement <feature-slug>`](../command-reference.md#ethereal-implement-feature-slug)
+Related command: [`ethereal implement <feature-slug>`](../command-reference.md)
 
 ## Responsibility
 

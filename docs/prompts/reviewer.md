@@ -2,7 +2,7 @@
 
 Cross-check artifacts for traceability, consistency, missing tests, and unresolved ambiguity.
 
-Related command: [`ethereal review <feature-slug>`](../command-reference.md#ethereal-review-feature-slug)
+Related command: [`ethereal review <feature-slug>`](../command-reference.md)
 
 ## Responsibility
 

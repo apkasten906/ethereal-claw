@@ -2,7 +2,7 @@
 
 Turn a rough feature request into a concise feature concept, assumptions, risks, and candidate stories.
 
-Related command: [`ethereal ideate "<request>"`](../command-reference.md#ethereal-ideate-request)
+Related command: [`ethereal ideate "<request>"`](../command-reference.md)
 
 ## Responsibility
 

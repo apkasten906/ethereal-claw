@@ -2,7 +2,7 @@
 
 Break the approved feature concept into stories, implementation tasks, dependencies, and review checkpoints.
 
-Related command: [`ethereal plan <feature-slug>`](../command-reference.md#ethereal-plan-feature-slug)
+Related command: [`ethereal plan <feature-slug>`](../command-reference.md)
 
 ## Responsibility
 

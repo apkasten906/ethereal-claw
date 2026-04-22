@@ -2,7 +2,7 @@
 
 Convert stories into BDD-ready behavior with acceptance criteria and Gherkin-style scenarios.
 
-Related command: [`ethereal ideate "<request>"`](../command-reference.md#ethereal-ideate-request)
+Related command: [`ethereal ideate "<request>"`](../command-reference.md)
 
 ## Responsibility
 
