@@ -1,0 +1,15 @@
+ideate:
+  defaultTier: medium
+  fallbackAllowed: true
+plan:
+  defaultTier: low
+  fallbackAllowed: true
+implement:
+  defaultTier: medium
+  fallbackAllowed: true
+test:
+  defaultTier: low
+  fallbackAllowed: true
+review:
+  defaultTier: medium
+  fallbackAllowed: true

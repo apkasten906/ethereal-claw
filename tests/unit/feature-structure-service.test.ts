@@ -1,0 +1,97 @@
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { FeatureStructureService } from "../../packages/core/src/artifacts/feature-structure-service.js";
+
+const tempDirs: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(tempDirs.map((dir) => rm(dir, { recursive: true, force: true })));
+  tempDirs.length = 0;
+});
+
+describe("FeatureStructureService", () => {
+  it("creates the expected feature workspace", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-"));
+    tempDirs.push(root);
+
+    const service = new FeatureStructureService(root);
+    await service.createWorkspace({
+      slug: "feature-auth-refresh",
+      title: "Auth Refresh",
+      request: "refresh tokens for admins",
+      status: "draft",
+      createdAt: "2026-04-17T00:00:00.000Z",
+      updatedAt: "2026-04-17T00:00:00.000Z"
+    });
+
+    await expect(access(path.join(root, "features", "feature-auth-refresh", "stories"))).resolves.toBeUndefined();
+  });
+
+  it("serializes feature metadata safely as YAML", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-"));
+    tempDirs.push(root);
+
+    const service = new FeatureStructureService(root);
+    await service.createWorkspace({
+      slug: "feature-title-with-punctuation",
+      title: "Auth: Refresh #1",
+      request: "refresh tokens for admins: phase #1",
+      status: "draft",
+      createdAt: "2026-04-17T00:00:00.000Z",
+      updatedAt: "2026-04-17T00:00:00.000Z"
+    });
+
+    const featureYaml = await readFile(
+      path.join(root, "features", "feature-title-with-punctuation", "feature.yaml"),
+      "utf8"
+    );
+
+    expect(featureYaml).toContain("title: 'Auth: Refresh #1'");
+    expect(featureYaml).toContain("request: 'refresh tokens for admins: phase #1'");
+  });
+
+  it("loads saved feature metadata", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-"));
+    tempDirs.push(root);
+
+    const service = new FeatureStructureService(root);
+    await service.createWorkspace({
+      slug: "feature-auth-refresh",
+      title: "Auth Refresh",
+      request: "refresh tokens for admins",
+      status: "draft",
+      createdAt: "2026-04-17T00:00:00.000Z",
+      updatedAt: "2026-04-17T00:00:00.000Z"
+    });
+
+    await expect(service.loadFeature("feature-auth-refresh")).resolves.toMatchObject({
+      slug: "feature-auth-refresh",
+      request: "refresh tokens for admins"
+    });
+  });
+
+  it("rejects feature metadata with an invalid status", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-"));
+    tempDirs.push(root);
+
+    await mkdir(path.join(root, "features", "feature-auth-refresh"), { recursive: true });
+    await writeFile(
+      path.join(root, "features", "feature-auth-refresh", "feature.yaml"),
+      [
+        "slug: feature-auth-refresh",
+        "title: Auth Refresh",
+        "request: refresh tokens for admins",
+        "status: shipped",
+        "createdAt: '2026-04-17T00:00:00.000Z'",
+        "updatedAt: '2026-04-17T00:00:00.000Z'",
+        ""
+      ].join("\n")
+    );
+
+    const service = new FeatureStructureService(root);
+
+    await expect(service.loadFeature("feature-auth-refresh")).rejects.toThrow("Invalid feature metadata");
+  });
+});

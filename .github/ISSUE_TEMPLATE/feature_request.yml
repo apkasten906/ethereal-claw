@@ -1,0 +1,34 @@
+name: Feature Request
+description: Propose a new capability or improvement.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem are you trying to solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution
+      description: Describe the desired behavior or workflow.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: List concrete outcomes that would make this complete.
+      placeholder: |
+        - Given ...
+        - When ...
+        - Then ...
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Context
+      description: Constraints, related issues, or design notes.
