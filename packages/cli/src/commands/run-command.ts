@@ -4,7 +4,7 @@ import { printJson } from "../presentation/console-output.js";
 
 export function createRunCommand(): Command {
   return new Command("run")
-    .description("Run the end-to-end artifact workflow for a feature.")
+    .description("Run plan \u2192 implement \u2192 test \u2192 review stages for an existing feature workspace (run ideate first).")
     .argument("<featureSlug>", "feature slug")
     .option("--request <request>", "override feature request", "")
     .option("--dry-run", "record a dry run", false)

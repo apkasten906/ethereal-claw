@@ -222,8 +222,9 @@ export class WorkflowOrchestrator {
   }
 
   private wrapGherkin(title: string): string {
+    const safeTitle = title.replace(/[\r\n]+/g, " ").trim();
     return [
-      `Feature: ${title}`,
+      `Feature: ${safeTitle}`,
       "",
       "  Scenario: Initial workflow scaffold",
       "    Given a feature request exists",

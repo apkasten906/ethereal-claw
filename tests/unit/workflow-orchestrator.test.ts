@@ -213,4 +213,25 @@ describe("WorkflowOrchestrator", () => {
       })
     ).rejects.toThrow("Feature request must contain at least one alphanumeric character to generate a slug.");
   });
+
+  it("sanitizes newlines in feature title before writing Gherkin scaffold", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-multiline-title",
+      title: "Line one\nLine two",
+      request: "feature with multiline title",
+      dryRun: true
+    });
+
+    const bddContent = await readFile(
+      path.join(root, "features", "feature-multiline-title", "bdd", "001-initial.feature"),
+      "utf8"
+    );
+
+    expect(bddContent).not.toContain("\nLine two");
+    expect(bddContent).toMatch(/^Feature: Line one Line two$/m);
+  });
 });
