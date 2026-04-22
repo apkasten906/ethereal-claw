@@ -53,6 +53,23 @@ describe("CLI smoke", () => {
     await expect(access(path.join(root, "runs"))).resolves.toBeUndefined();
   });
 
+  it("init does not overwrite existing config", async () => {
+    const root = await createTempWorkspace();
+    tempDirs.push(root);
+
+    await mkdir(path.join(root, "config"), { recursive: true });
+    const existing = path.join(root, "config", "ethereal-claw.config.yaml");
+    await copyFile(exampleConfig, existing);
+    const before = await readFile(existing, "utf8");
+
+    const { stdout } = await runCli(root, ["init"]);
+
+    expect(stdout).toContain("Config already exists.");
+
+    const after = await readFile(existing, "utf8");
+    expect(after).toBe(before);
+  });
+
   it("ideate writes feature artifacts and a run log with budget data", async () => {
     const root = await createTempWorkspace();
     await mkdir(path.join(root, "config"), { recursive: true });

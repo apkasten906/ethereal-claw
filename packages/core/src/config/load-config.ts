@@ -5,17 +5,18 @@ import { load } from "js-yaml";
 import { clawConfigSchema, type ClawConfig } from "./config-schema.js";
 import { readUtf8 } from "../utils/file-system.js";
 
-const defaultConfigPath = path.join(process.cwd(), "config", "ethereal-claw.config.yaml");
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 export const bundledConfigExamplePath = path.resolve(moduleDir, "../../config/ethereal-claw.config.example.yaml");
 
-export async function loadConfig(configPath = defaultConfigPath): Promise<ClawConfig> {
-  const usingFallback = !existsSync(configPath);
-  const resolvedPath = usingFallback ? bundledConfigExamplePath : configPath;
+export async function loadConfig(configPath?: string): Promise<ClawConfig> {
+  const defaultConfigPath = path.join(process.cwd(), "config", "ethereal-claw.config.yaml");
+  const candidate = configPath ?? defaultConfigPath;
+  const usingFallback = !existsSync(candidate);
+  const resolvedPath = usingFallback ? bundledConfigExamplePath : candidate;
 
   if (usingFallback) {
     process.stderr.write(
-      `[ethereal-claw] No config found at "${configPath}". Using bundled defaults (mock provider). Run "ethereal init" to create a local config.\n`
+      `[ethereal-claw] No config found at "${candidate}". Using bundled defaults (mock provider). Run "ethereal init" to create a local config.\n`
     );
   }
 

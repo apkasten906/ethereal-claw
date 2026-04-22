@@ -49,7 +49,7 @@ export class WorkflowOrchestrator {
   async ideate(options: StageOptions): Promise<RunResult> {
     this.resetStageState();
     const startedAt = nowUtcIso();
-    const feature = this.buildFeature(options);    
+    const feature = this.buildFeature(options);
 
     try {
 
