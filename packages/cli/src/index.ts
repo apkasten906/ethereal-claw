@@ -18,9 +18,6 @@ function getDefaultCommandName(): string {
   if (process.env.npm_lifecycle_event === "ec") {
     return "ec";
   }
-  if (process.env.npm_lifecycle_event === "ethereal") {
-    return "ethereal";
-  }
   return "ethereal";
 }
 

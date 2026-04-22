@@ -195,6 +195,12 @@ export class WorkflowOrchestrator {
 
     const snapshot = this.budget.record(result.estimatedCostUsd);
     this.logger.info({ agent, stage, budget: snapshot }, "workflow step recorded");
+
+    if (snapshot.status === "stop" || snapshot.status === "hard-stop") {
+      throw new Error(
+        `Budget ${snapshot.status}: $${snapshot.spentUsd.toFixed(4)} spent (${snapshot.percentConsumed}% consumed, $${snapshot.remainingUsd.toFixed(4)} remaining). Reduce your request scope or increase the run budget.`
+      );
+    }
   }
 
   private async finishRun(

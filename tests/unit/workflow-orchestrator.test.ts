@@ -234,4 +234,31 @@ describe("WorkflowOrchestrator", () => {
     expect(bddContent).not.toContain("\nLine two");
     expect(bddContent).toMatch(/^Feature: Line one Line two$/m);
   });
+
+  it("throws when the budget hard-stop threshold is reached", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const tinyBudgetConfig = {
+      provider: "mock" as const,
+      budget: {
+        runBudgetUsd: 0.000001,
+        warnAtPercent: 25,
+        confirmAtPercent: 50,
+        stopAtPercent: 75,
+        hardCapPercent: 100
+      },
+      providers: {}
+    };
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), tinyBudgetConfig, root);
+
+    await expect(
+      orchestrator.ideate({
+        featureSlug: "feature-budget-test",
+        request: "test budget enforcement",
+        dryRun: true
+      })
+    ).rejects.toThrow(/Budget (stop|hard-stop):/);
+  });
 });
