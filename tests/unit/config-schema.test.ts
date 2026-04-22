@@ -12,6 +12,17 @@ describe("clawConfigSchema", () => {
     });
   });
 
+  it("creates fresh default objects for each parse", () => {
+    const first = clawConfigSchema.parse({ provider: "mock" });
+    const second = clawConfigSchema.parse({ provider: "mock" });
+
+    first.budget.runBudgetUsd = 99;
+    first.providers.openai = { model: "mutated" };
+
+    expect(second.budget.runBudgetUsd).toBe(5);
+    expect(second.providers.openai).toBeUndefined();
+  });
+
   it("rejects budget thresholds that are out of order", () => {
     expect(() =>
       clawConfigSchema.parse({

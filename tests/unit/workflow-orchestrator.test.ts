@@ -165,7 +165,7 @@ describe("WorkflowOrchestrator", () => {
         request: "refresh tokens for admins",
         dryRun: true
       })
-    ).rejects.toThrow('Feature workspace "feature-auth-refresh" does not exist. Run "ethereal-claw ideate" first or provide a valid feature slug.');
+    ).rejects.toThrow('Feature workspace "feature-auth-refresh" does not exist. Run the ideate stage first or provide a valid feature slug.');
   });
 
   it("preserves unexpected filesystem errors when checking feature workspaces", async () => {

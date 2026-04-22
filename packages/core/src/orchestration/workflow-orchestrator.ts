@@ -176,7 +176,7 @@ export class WorkflowOrchestrator {
       }
 
       throw new Error(
-        `Feature workspace "${featureSlug}" does not exist. Run "ethereal-claw ideate" first or provide a valid feature slug.`
+        `Feature workspace "${featureSlug}" does not exist. Run the ideate stage first or provide a valid feature slug.`
       );
     }
   }

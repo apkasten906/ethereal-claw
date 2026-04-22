@@ -19,6 +19,7 @@
     "lint": "node ./node_modules/eslint/bin/eslint.js .",
     "link:cli": "npm link --workspace @ethereal-claw/cli",
     "prepare": "husky",
+    "pretest": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -b --pretty false",

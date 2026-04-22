@@ -8,6 +8,10 @@ const defaultBudget = {
   hardCapPercent: 100
 };
 
+function createDefaultBudget(): typeof defaultBudget {
+  return { ...defaultBudget };
+}
+
 const budgetSchema = z.object({
   runBudgetUsd: z.number().positive().default(defaultBudget.runBudgetUsd),
   warnAtPercent: z.number().min(1).max(100).default(defaultBudget.warnAtPercent),
@@ -38,7 +42,7 @@ const budgetSchema = z.object({
 
 export const clawConfigSchema = z.object({
   provider: z.enum(["mock", "openai", "github"]).default("mock"),
-  budget: budgetSchema.default(defaultBudget),
+  budget: budgetSchema.default(createDefaultBudget),
   providers: z.object({
     openai: z.object({
       model: z.string().default("gpt-5.4-mini")
@@ -46,7 +50,7 @@ export const clawConfigSchema = z.object({
     github: z.object({
       model: z.string().default("github-model-default")
     }).optional()
-  }).default({})
+  }).default(() => ({}))
 });
 
 export type ClawConfig = z.infer<typeof clawConfigSchema>;

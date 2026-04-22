@@ -13,6 +13,11 @@ on:
       - fix/**
       - chore/**
       - docs/**
+      - refactor/**
+      - test/**
+      - ci/**
+      - release/**
+      - hotfix/**
 
 permissions:
   contents: read

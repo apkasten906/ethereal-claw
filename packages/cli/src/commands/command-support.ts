@@ -23,7 +23,7 @@ export async function resolveStageRequest(featureSlug: string, requestOverride: 
 
   if (!feature.request.trim()) {
     throw new Error(
-      `Feature workspace "${featureSlug}" is missing a saved request. Re-run "ethereal-claw ideate" or pass --request.`
+      `Feature workspace "${featureSlug}" is missing a saved request. Re-run the ideate stage or pass --request.`
     );
   }
 
