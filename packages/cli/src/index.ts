@@ -8,6 +8,7 @@ import { createInitCommand } from "./commands/init-command.js";
 import { createPlanCommand } from "./commands/plan-command.js";
 import { createReviewCommand } from "./commands/review-command.js";
 import { createRunCommand } from "./commands/run-command.js";
+import { createStatusCommand } from "./commands/status-command.js";
 import { createTestCommand } from "./commands/test-command.js";
 
 const program = new Command();
@@ -42,6 +43,7 @@ program.addCommand(createImplementCommand());
 program.addCommand(createTestCommand());
 program.addCommand(createReviewCommand());
 program.addCommand(createRunCommand());
+program.addCommand(createStatusCommand());
 
 await program.parseAsync(process.argv).catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);

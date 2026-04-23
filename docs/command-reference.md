@@ -17,7 +17,7 @@ Related docs:
 
 The stage commands (`ideate`, `plan`, `implement`, `test`, `review`, and `run`) print JSON to stdout. Core logs are written to stderr so JSON output remains script-friendly.
 
-`init` prints human-readable status messages to stdout because it is a setup command rather than a workflow stage.
+`init` and `status` print human-readable status messages to stdout because they are setup and orientation commands rather than workflow stages.
 
 Every stage writes a run log to both:
 
@@ -215,6 +215,38 @@ Related docs:
 
 - [Workflow: Review](workflow.md#review)
 - [Reviewer prompt](prompts/reviewer.md)
+
+## `ethereal status [feature-slug]`
+
+Show workflow visibility without running a model-backed stage.
+
+Syntax:
+
+```bash
+ethereal status
+ec status
+ethereal status feature-auth-refresh
+ec status feature-auth-refresh
+```
+
+Global status lists known feature workspaces, their current stage, the latest run result, and the next recommended command.
+
+Feature status shows:
+
+- feature title and slug
+- current stage
+- available artifacts
+- missing expected artifacts for the current stage
+- last run result and timestamp
+- token usage summary from the last run
+- next recommended command
+
+If the feature does not exist, the command reports that cleanly and suggests `ec status` to list known features.
+
+Related docs:
+
+- [Workflow](workflow.md)
+- [Architecture](architecture.md)
 
 ## `ethereal run <feature-slug>`
 

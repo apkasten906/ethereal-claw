@@ -73,6 +73,7 @@ npm run unlink:cli
 | `ethereal implement <feature-slug>` | Generate an implementation plan without modifying source code. |
 | `ethereal test <feature-slug>` | Generate test planning artifacts; this does not run the project test suite. |
 | `ethereal review <feature-slug>` | Generate review artifacts and unresolved questions. |
+| `ethereal status [feature-slug]` | Show workflow status and next steps without invoking a provider. |
 | `ethereal run <feature-slug>` | Run `plan`, `implement`, `test`, and `review` for an existing feature. |
 
 See the [command reference](docs/command-reference.md) for syntax, options, outputs, and related workflow documentation.

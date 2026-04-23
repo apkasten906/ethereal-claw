@@ -16,6 +16,7 @@ export * from "./providers/github-model-provider.js";
 export * from "./providers/llm-provider.js";
 export * from "./providers/mock-provider.js";
 export * from "./providers/openai-provider.js";
+export * from "./status/status-service.js";
 export * from "./utils/file-system.js";
 export * from "./utils/slugs.js";
 export * from "./utils/timestamps.js";

@@ -114,6 +114,24 @@ describe("CLI smoke", () => {
     ).resolves.toBeUndefined();
   });
 
+  it("reports workflow status without invoking a stage", async () => {
+    const root = await createTempWorkspace();
+
+    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run"]);
+    await runCli(root, ["plan", "feature-add-secure-login-audit-history", "--dry-run"]);
+
+    const overview = await runCli(root, ["status"]);
+    expect(overview.stdout).toContain("Known features");
+    expect(overview.stdout).toContain("feature-add-secure-login-audit-history");
+    expect(overview.stdout).toContain("stage: plan");
+
+    const detail = await runCli(root, ["status", "feature-add-secure-login-audit-history"]);
+    expect(detail.stdout).toContain("Current stage: plan");
+    expect(detail.stdout).toContain("Available artifacts:");
+    expect(detail.stdout).toContain("Missing artifacts:");
+    expect(detail.stdout).toContain("Next: ec implement feature-add-secure-login-audit-history");
+  });
+
   it("runs existing feature stages without rerunning ideation", async () => {
     const root = await createTempWorkspace();
 

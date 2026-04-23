@@ -16,6 +16,8 @@ For exact syntax and options, see the [command reference](command-reference.md).
 
 Each stage writes artifacts into a feature workspace and appends a run log entry under both `.ec/runs/` and `.ec/features/<feature-slug>/run-history/` by default.
 
+Use `ethereal status` or `ec status` to list known feature workspaces and their next recommended commands. Use `ec status <feature-slug>` for a feature-specific view of current stage, available artifacts, missing artifacts, latest run result, and token usage. Status reads local workspace files only and does not call an LLM provider.
+
 ## Ideate
 
 `ideate` starts the workflow. It accepts a rough request, creates a stable feature slug, writes `feature.yaml`, and creates initial ideation, story, and BDD artifacts.
