@@ -1,4 +1,4 @@
-# Ethereal-CLAW CLI — Base Repo Blueprint
+# Ethereal-CLAW CLI — Base Repo Blueprint v3
 
 ## Purpose
 
@@ -6,11 +6,11 @@ Build a **CLI-first orchestration layer** for an AI-assisted software developmen
 
 The tool should let you issue commands like:
 
-- `ethereal-claw ideate "multi-tenant auth for admin portal"`
-- `ethereal-claw plan feature/auth-refresh`
-- `ethereal-claw implement feature/auth-refresh`
-- `ethereal-claw test feature/auth-refresh`
-- `ethereal-claw review feature/auth-refresh`
+* `ethereal-claw ideate "multi-tenant auth for admin portal"`
+* `ethereal-claw plan feature/auth-refresh`
+* `ethereal-claw implement feature/auth-refresh`
+* `ethereal-claw test feature/auth-refresh`
+* `ethereal-claw review feature/auth-refresh`
 
 The orchestration layer coordinates multiple agents so they work toward **BDD-style acceptance criteria** and produce auditable artifacts.
 
@@ -37,11 +37,11 @@ The orchestration layer must be **budget-aware by default**.
 
 That means:
 
-- send low-risk, repetitive, formatting-heavy work to the cheapest available model tier
-- reserve expensive models for ambiguity resolution, architecture tradeoffs, critical review, and final quality gates
-- estimate token cost before each agent call
-- record actual token usage after each agent call
-- stop, downgrade, or ask for human intervention when the run crosses configured thresholds
+* send low-risk, repetitive, formatting-heavy work to the cheapest available model tier
+* reserve expensive models for ambiguity resolution, architecture tradeoffs, critical review, and final quality gates
+* estimate token cost before each agent call
+* record actual token usage after each agent call
+* stop, downgrade, or ask for human intervention when the run crosses configured thresholds
 
 The system should treat token budget as a first-class operational concern, not an afterthought.
 
@@ -53,21 +53,22 @@ Because you want a CLI-first solution and may later expose it through the web, t
 
 ### Phase 1
 
-- **Node.js + TypeScript** for the CLI and orchestration core
-- **npm workspaces** for monorepo organization
-- **Commander** for CLI command parsing
-- **Zod** for input and config validation
-- **Pino** for structured logging
-- **OpenAI / GitHub Copilot / Codex adapters** behind a provider abstraction
-- **Markdown + YAML + JSON** for artifacts
-- **Vitest** for unit tests
+* **Node.js + TypeScript** for the CLI and orchestration core
+* **npm workspaces** for monorepo organization
+* **Commander** for CLI command parsing
+* **Zod** for input and config validation
+* **Pino** for structured logging
+* **OpenAI / GitHub Copilot / Codex adapters** behind a provider abstraction
+* **Markdown + YAML + JSON** for artifacts
+* **Vitest** for unit tests
 
 ### Later extension
 
-- Web terminal shell in:
-  - Blazor
-  - Next.js
-  - or a lightweight terminal UI in the browser
+* Web terminal shell in:
+
+  * Blazor
+  * Next.js
+  * or a lightweight terminal UI in the browser
 
 The key design choice is this: **keep the orchestration engine independent from the UI**.
 
@@ -96,14 +97,14 @@ User
 
 ### Design principles
 
-- CLI first
-- deterministic file layout
-- one workflow state per feature
-- human review gates
-- provider-agnostic LLM integration
-- budget-aware model routing
-- graceful downgrade to cheaper models
-- BDD drives implementation and testing
+* CLI first
+* deterministic file layout
+* one workflow state per feature
+* human review gates
+* provider-agnostic LLM integration
+* budget-aware model routing
+* graceful downgrade to cheaper models
+* BDD drives implementation and testing
 
 ---
 
@@ -111,21 +112,21 @@ User
 
 ### In scope
 
-- Create feature workspace
-- Generate plan artifacts
-- Generate user stories and acceptance criteria
-- Generate implementation task list
-- Generate test scenarios
-- Log all workflow steps
-- Dry-run mode
+* Create feature workspace
+* Generate plan artifacts
+* Generate user stories and acceptance criteria
+* Generate implementation task list
+* Generate test scenarios
+* Log all workflow steps
+* Dry-run mode
 
 ### Out of scope for v1
 
-- Automatic code merge to main
-- Autonomous deployment to production
-- Parallel multi-repo execution
-- Sophisticated agent memory
-- Browser UI
+* Automatic code merge to main
+* Autonomous deployment to production
+* Parallel multi-repo execution
+* Sophisticated agent memory
+* Browser UI
 
 ---
 
@@ -264,70 +265,70 @@ features/
 
 Input:
 
-- rough feature request
+* rough feature request
 
 Output:
 
-- feature summary
-- assumptions
-- risks
-- candidate stories
+* feature summary
+* assumptions
+* risks
+* candidate stories
 
 ### 2. Plan
 
 Input:
 
-- approved feature summary
+* approved feature summary
 
 Output:
 
-- story breakdown
-- dependency order
-- implementation tasks
-- review points
+* story breakdown
+* dependency order
+* implementation tasks
+* review points
 
 ### 3. Write BDD
 
 Input:
 
-- user stories
+* user stories
 
 Output:
 
-- Gherkin scenarios
-- acceptance criteria mapping
+* Gherkin scenarios
+* acceptance criteria mapping
 
 ### 4. Consistency Review
 
 Checks:
 
-- does every story map to acceptance criteria?
-- do implementation tasks trace back to stories?
-- are test scenarios missing for any criteria?
+* does every story map to acceptance criteria?
+* do implementation tasks trace back to stories?
+* are test scenarios missing for any criteria?
 
 ### 5. Implement
 
 Output:
 
-- proposed code changes
-- file-level change plan
-- implementation notes
+* proposed code changes
+* file-level change plan
+* implementation notes
 
 ### 6. Test
 
 Output:
 
-- unit/integration test suggestions
-- manual test checklist
-- gaps / risks
+* unit/integration test suggestions
+* manual test checklist
+* gaps / risks
 
 ### 7. Review
 
 Output:
 
-- architecture review
-- code quality review
-- unresolved questions
+* architecture review
+* code quality review
+* unresolved questions
 
 ---
 
@@ -335,31 +336,31 @@ Output:
 
 Each workflow step should declare:
 
-- required quality level
-- maximum allowed token budget
-- whether it may use a low-cost model
-- whether fallback or downgrade is allowed
+* required quality level
+* maximum allowed token budget
+* whether it may use a low-cost model
+* whether fallback or downgrade is allowed
 
 ### Suggested routing policy
 
 #### Use low-cost models for:
 
-- formatting markdown artifacts
-- converting notes into template structure
-- story splitting when requirements are already clear
-- generating checklists
-- summarizing run logs
-- rewriting acceptance criteria into a standard format
-- simple traceability checks
+* formatting markdown artifacts
+* converting notes into template structure
+* story splitting when requirements are already clear
+* generating checklists
+* summarizing run logs
+* rewriting acceptance criteria into a standard format
+* simple traceability checks
 
 #### Use stronger models for:
 
-- resolving ambiguity in requirements
-- architecture and security decisions
-- implementation planning across multiple modules
-- code review on risky changes
-- contradiction detection across many artifacts
-- final quality gate before you spend more money or merge code
+* resolving ambiguity in requirements
+* architecture and security decisions
+* implementation planning across multiple modules
+* code review on risky changes
+* contradiction detection across many artifacts
+* final quality gate before you spend more money or merge code
 
 ### Example policy table
 
@@ -375,9 +376,9 @@ Each workflow step should declare:
 
 A practical default for your case is:
 
-- **cheap/free mini model first**
-- escalate only on failure, ambiguity, or risk
-- never use a premium model just for formatting or boilerplate
+* **cheap/free mini model first**
+* escalate only on failure, ambiguity, or risk
+* never use a premium model just for formatting or boilerplate
 
 ---
 
@@ -387,30 +388,30 @@ The orchestrator should maintain both **run-level** and **session-level** counte
 
 ### Track at minimum
 
-- estimated input tokens
-- estimated output tokens
-- actual prompt tokens
-- actual completion tokens
-- cumulative tokens per run
-- cumulative tokens per provider
-- estimated cost per call
-- estimated remaining budget for the run
+* estimated input tokens
+* estimated output tokens
+* actual prompt tokens
+* actual completion tokens
+* cumulative tokens per run
+* cumulative tokens per provider
+* estimated cost per call
+* estimated remaining budget for the run
 
 ### Control actions
 
-- warn at 50 percent of budget
-- require confirmation or auto-downgrade at 75 percent
-- stop non-critical steps at 90 percent
-- abort run when hard cap is reached
+* warn at 50 percent of budget
+* require confirmation or auto-downgrade at 75 percent
+* stop non-critical steps at 90 percent
+* abort run when hard cap is reached
 
 ### Required behaviors
 
-- preflight estimate before every model call
-- compare estimate against remaining run budget
-- downgrade model if possible
-- trim context before escalating
-- cache reusable artifacts and summaries
-- reuse prior outputs instead of resending the full history
+* preflight estimate before every model call
+* compare estimate against remaining run budget
+* downgrade model if possible
+* trim context before escalating
+* cache reusable artifacts and summaries
+* reuse prior outputs instead of resending the full history
 
 ### Hard rule
 
@@ -426,10 +427,10 @@ Never let the orchestrator blindly continue spending tokens because a workflow g
 
 **Responsibilities:**
 
-- summarize intent
-- identify assumptions
-- identify risks
-- suggest bounded scope
+* summarize intent
+* identify assumptions
+* identify risks
+* suggest bounded scope
 
 ## 2. Planning Agent
 
@@ -437,10 +438,10 @@ Never let the orchestrator blindly continue spending tokens because a workflow g
 
 **Responsibilities:**
 
-- break feature into stories
-- sequence work
-- identify dependencies
-- recommend vertical slices
+* break feature into stories
+* sequence work
+* identify dependencies
+* recommend vertical slices
 
 ## 3. Story / BDD Agent
 
@@ -448,10 +449,10 @@ Never let the orchestrator blindly continue spending tokens because a workflow g
 
 **Responsibilities:**
 
-- write user stories
-- write acceptance criteria
-- write Gherkin scenarios
-- highlight ambiguity
+* write user stories
+* write acceptance criteria
+* write Gherkin scenarios
+* highlight ambiguity
 
 ## 4. Consistency Reviewer Agent
 
@@ -459,9 +460,9 @@ Never let the orchestrator blindly continue spending tokens because a workflow g
 
 **Responsibilities:**
 
-- cross-check stories, AC, and tasks
-- flag unclear wording
-- flag non-testable acceptance criteria
+* cross-check stories, AC, and tasks
+* flag unclear wording
+* flag non-testable acceptance criteria
 
 ## 5. Implementer Agent
 
@@ -469,10 +470,10 @@ Never let the orchestrator blindly continue spending tokens because a workflow g
 
 **Responsibilities:**
 
-- suggest file changes
-- scaffold implementation
-- document rationale
-- stay inside architecture guardrails
+* suggest file changes
+* scaffold implementation
+* document rationale
+* stay inside architecture guardrails
 
 ## 6. Test Agent
 
@@ -480,10 +481,10 @@ Never let the orchestrator blindly continue spending tokens because a workflow g
 
 **Responsibilities:**
 
-- generate unit test ideas
-- generate integration test ideas
-- generate manual test checklist
-- map tests back to scenarios
+* generate unit test ideas
+* generate integration test ideas
+* generate manual test checklist
+* map tests back to scenarios
 
 ## 7. Review Agent
 
@@ -491,10 +492,10 @@ Never let the orchestrator blindly continue spending tokens because a workflow g
 
 **Responsibilities:**
 
-- code quality checks
-- design consistency checks
-- risk notes
-- tech debt notes
+* code quality checks
+* design consistency checks
+* risk notes
+* tech debt notes
 
 ---
 
@@ -533,42 +534,42 @@ ec run feature-rbac --from ideate --to review
 
 #### `ethereal-claw init`
 
-- creates config file if missing
-- verifies folders
-- validates provider settings
+* creates config file if missing
+* verifies folders
+* validates provider settings
 
 #### `ethereal-claw ideate <prompt>`
 
-- creates feature folder
-- writes ideation artifact
-- generates feature metadata
+* creates feature folder
+* writes ideation artifact
+* generates feature metadata
 
 #### `ethereal-claw plan <feature-id>`
 
-- writes plan.md
-- writes implementation task draft
+* writes plan.md
+* writes implementation task draft
 
 #### `ethereal-claw bdd <feature-id>`
 
-- writes stories and `.feature` files
+* writes stories and `.feature` files
 
 #### `ethereal-claw review-consistency <feature-id>`
 
-- checks traceability from story to BDD to tasks
+* checks traceability from story to BDD to tasks
 
 #### `ethereal-claw implement <feature-id>`
 
-- produces implementation proposal
-- later can optionally patch code
+* produces implementation proposal
+* later can optionally patch code
 
 #### `ethereal-claw test <feature-id>`
 
-- writes test plan and coverage notes
+* writes test plan and coverage notes
 
 #### `ethereal-claw run <feature-id>`
 
-- executes multiple steps in sequence
-- logs each stage
+* executes multiple steps in sequence
+* logs each stage
 
 ---
 
@@ -587,14 +588,14 @@ export type WorkflowStage =
 
 Each run should capture:
 
-- feature id
-- stage
-- agent used
-- provider used
-- prompt hash
-- artifact outputs
-- success/failure
-- timestamp
+* feature id
+* stage
+* agent used
+* provider used
+* prompt hash
+* artifact outputs
+* success/failure
+* timestamp
 
 This gives you auditability and reproducibility.
 
@@ -606,11 +607,11 @@ Store prompts as versioned markdown files in `docs/prompts/`.
 
 Each prompt should include:
 
-- purpose
-- inputs
-- required output schema
-- constraints
-- definition of done
+* purpose
+* inputs
+* required output schema
+* constraints
+* definition of done
 
 This avoids prompt chaos and makes the system maintainable.
 
@@ -707,35 +708,35 @@ workflow:
 
 Before a stage runs, estimate:
 
-- size of input context
-- expected output size
-- cheapest acceptable model tier
-- whether cached summaries can replace full artifacts
+* size of input context
+* expected output size
+* cheapest acceptable model tier
+* whether cached summaries can replace full artifacts
 
 ### 2. Compress context aggressively
 
 Do not keep resending:
 
-- full story files
-- full logs
-- whole codebases
-- repeated prompt boilerplate
+* full story files
+* full logs
+* whole codebases
+* repeated prompt boilerplate
 
 Instead send:
 
-- short structured summaries
-- selected excerpts
-- hashes and references to existing files
-- only the files relevant to the current stage
+* short structured summaries
+* selected excerpts
+* hashes and references to existing files
+* only the files relevant to the current stage
 
 ### 3. Cache derived artifacts
 
 If a low-cost model already produced:
 
-- normalized stories
-- reformatted AC
-- traceability maps
-- implementation summaries
+* normalized stories
+* reformatted AC
+* traceability maps
+* implementation summaries
 
 then reuse those rather than regenerating them.
 
@@ -743,9 +744,9 @@ then reuse those rather than regenerating them.
 
 Only send work to a stronger model when:
 
-- the cheap model fails quality checks
-- the task is truly high-risk
-- ambiguity remains after one cheap pass
+* the cheap model fails quality checks
+* the task is truly high-risk
+* ambiguity remains after one cheap pass
 
 ### 5. Separate orchestration from generation
 
@@ -757,116 +758,158 @@ Budget logic belongs in the orchestrator, not buried inside each agent.
 
 ## Milestone 1 — Local CLI Skeleton
 
-Status: in PR
+Status: completed
 
 Delivered:
 
-- repo initialized
-- `ethereal` / `ec` CLI entry points
-- `init` command
-- `ideate` command
-- local artifact writing
-- mock provider
-- budget manager
-- token estimate utility
-- run budget log
+* repo initialized
+* `ethereal` / `ec` CLI entry points
+* `init` command
+* `ideate` command
+* local artifact writing
+* mock provider
+* budget manager
+* token estimate utility
+* run budget log
 
-Exit criteria:
+Completed outcome:
 
-- feature workspace can be created from one command
-- generated files can be inspected locally
-- budget tracking is visible in the run log
+* feature workspace can be created from one command
+* generated files can be inspected locally
+* budget tracking is visible in the run log
 
-## Milestone 2 — Planning + Stories + BDD + Consistency Review
+## Current Repo Reality Check
+
+The live codebase already includes more than the original Milestone 1 plan:
+
+* `plan` already exists as a command
+* the orchestrator already supports `ideate`, `plan`, `implement`, `test`, `review`, and `run`
+* `ideate` already creates a starter story artifact and a placeholder `.feature` file
+* feature workspaces already include `stories/`, `bdd/`, `implementation/`, `tests/`, `review/`, and `run-history/`
+
+That means Milestone 2 should be treated as an **augmentation of the existing pipeline**, not a fresh implementation of planning from scratch.
+
+## Milestone 2 — First-Class BDD and Consistency Review
 
 ### Goal
-Move a feature from ideation into an implementation-ready planning state with traceable stories, acceptance criteria, and Gherkin scenarios.
 
-### Deliver
+Upgrade the current scaffold so that planning becomes traceable and behavior-driven, with BDD and consistency review represented as real workflow stages rather than placeholders.
 
-- `ethereal plan <feature-id>`
-- `ec plan <feature-id>`
-- `ethereal bdd <feature-id>`
-- `ec bdd <feature-id>`
-- `ethereal review-consistency <feature-id>`
-- `ec review-consistency <feature-id>`
-- prompt file system for planning, story writing, BDD, and consistency review
-- structured story artifacts
-- `.feature` file generation
-- traceability metadata between plan, stories, AC, and BDD
-- consistency review artifact
+### Already present in the repo
+
+* `ethereal plan <feature-id>`
+* `ec plan <feature-id>`
+* a working `plan()` orchestrator stage
+* story generation during `ideate()`
+* placeholder `.feature` generation during `ideate()`
+
+### New work for Milestone 2
+
+* `ethereal bdd <feature-id>`
+* `ec bdd <feature-id>`
+* `ethereal review-consistency <feature-id>`
+* `ec review-consistency <feature-id>`
+* explicit `bdd` workflow stage
+* explicit `review-consistency` workflow stage
+* structured story artifacts with explicit acceptance criteria
+* traceability metadata between plan, stories, AC, BDD, and implementation tasks
+* `traceability/traceability-map.json`
+* consistency review artifact that checks gaps and ambiguity
+* prompt file system for planner, story writer, BDD writer, and consistency reviewer
 
 ### Success criteria
 
-- one ideated feature can move to `plan`, `stories`, `bdd`, and `review-consistency`
-- every generated story has explicit acceptance criteria
-- every BDD scenario maps back to a story
-- consistency review flags missing traceability and ambiguity
-- token-safe routing still defaults to low-cost models for formatting and structure
+* one ideated feature can move through `plan`, `bdd`, and `review-consistency`
+* `plan` produces story-ready structure instead of only a generic planning artifact
+* every generated story has explicit acceptance criteria
+* every BDD scenario maps back to a story and acceptance criteria
+* consistency review flags missing traceability, ambiguity, and non-testable criteria
+* the placeholder BDD file generation is moved out of `ideate()` and replaced by a real `bdd()` stage
+* token-safe routing still defaults to low-cost models for formatting and structural work
 
-## Milestone 3 — Orchestrated Run
+## Milestone 3 — Orchestrated Run Refinement
 
 Deliver:
 
-- `ethereal run`
-- workflow engine
-- run logs
-- step status output
+* update `ethereal run`
+* update `ec run`
+* include `bdd` and `review-consistency` in the workflow graph when enabled
+* richer step status output
 
 Success criteria:
 
-- one command can run several stages in sequence
+* one command can run the expanded planning-to-review sequence predictably
 
 ## Milestone 4 — Real Provider Integration
 
 Deliver:
 
-- provider abstraction wired to real APIs
-- retry and rate-limit handling
-- structured prompt/response tracing
+* provider abstraction wired to real APIs
+* retry and rate-limit handling
+* structured prompt/response tracing
 
 Success criteria:
 
-- same workflow works with mock and real provider
+* same workflow works with mock and real provider
 
 ## Milestone 5 — Code Change Proposal
 
 Deliver:
 
-- implementation planning artifacts
-- optional code patch proposal mode
-- review output
+* implementation planning artifacts
+* optional code patch proposal mode
+* review output
 
 Success criteria:
 
-- tool can generate implementation guidance against repo context
+* tool can generate implementation guidance against repo context
 
 ---
 
 ## Milestone 2 Scope and Artifact Model
 
-### New commands
+### New and changed commands
 
 #### `ethereal plan <feature-id>`
-Creates or updates:
-- `features/<feature-id>/plan.md`
-- `features/<feature-id>/implementation/tasks.md`
-- feature metadata stage transition to `plan`
-- run history entry
+
+Current state:
+
+* already implemented in the repo
+
+Milestone 2 expectation:
+
+* upgrades `features/<feature-id>/plan.md`
+* produces implementation-ready story decomposition
+* writes or updates `features/<feature-id>/implementation/tasks.md`
+* writes structured inputs for later BDD generation
+* updates feature metadata and run history
 
 #### `ethereal bdd <feature-id>`
+
 Creates or updates:
-- `features/<feature-id>/stories/*.md`
-- `features/<feature-id>/bdd/*.feature`
-- traceability map file
-- feature metadata stage transition to `bdd`
-- run history entry
+
+* `features/<feature-id>/stories/*.md`
+* `features/<feature-id>/bdd/*.feature`
+* `features/<feature-id>/traceability/traceability-map.json`
+* feature metadata stage transition to `bdd`
+* run history entry
 
 #### `ethereal review-consistency <feature-id>`
+
 Creates or updates:
-- `features/<feature-id>/review/consistency-review.md`
-- feature metadata stage transition to `review-consistency`
-- run history entry
+
+* `features/<feature-id>/review/consistency-review.md`
+* feature metadata stage transition to `review-consistency`
+* run history entry
+
+### Required shared model changes
+
+Update workflow and metadata models to support the real Milestone 2 shape:
+
+* add `bdd` to workflow stages
+* add `review-consistency` to workflow stages
+* add corresponding feature statuses or current-stage tracking
+* add story, acceptance criteria, and traceability types
 
 ### Story file shape
 
@@ -933,7 +976,8 @@ Suggested structure:
       "storyId": "001-session-timeout",
       "planSections": ["Session management"],
       "acceptanceCriteriaIds": ["AC-001", "AC-002", "AC-003"],
-      "bddFiles": ["001-session-timeout.feature"]
+      "bddFiles": ["001-session-timeout.feature"],
+      "implementationTasks": ["TASK-001", "TASK-002"]
     }
   ]
 }
@@ -942,50 +986,55 @@ Suggested structure:
 ### New prompt files
 
 Add under `docs/prompts/`:
-- `planner.md`
-- `story-writer.md`
-- `bdd-writer.md`
-- `consistency-reviewer.md`
+
+* `planner.md`
+* `story-writer.md`
+* `bdd-writer.md`
+* `consistency-reviewer.md`
 
 Each prompt should define:
-- input files
-- output schema
-- traceability requirements
-- token budget expectation
-- escalation conditions
+
+* input files
+* output schema
+* traceability requirements
+* token budget expectation
+* escalation conditions
 
 ---
 
 ## Milestone 2 Build Order
 
-1. Add prompt file loader support.
-2. Implement planning agent.
-3. Implement `plan` command.
-4. Add story artifact template and generator.
-5. Implement BDD agent.
-6. Implement `bdd` command.
-7. Implement traceability map generation.
-8. Implement consistency reviewer agent.
-9. Implement `review-consistency` command.
-10. Add unit tests for plan-to-story-to-bdd traceability.
+1. Update shared workflow stages and feature metadata shape.
+2. Add `traceability/` directory creation to feature workspace creation.
+3. Add shared types for story, acceptance criteria, and traceability.
+4. Add prompt file loader support.
+5. Refine the planning agent and `plan` stage to emit structured planning output.
+6. Implement BDD agent.
+7. Implement `bdd` command and orchestrator stage.
+8. Implement traceability map generation.
+9. Implement consistency reviewer agent.
+10. Implement `review-consistency` command and orchestrator stage.
+11. Remove placeholder BDD creation from `ideate()`.
+12. Add unit tests for plan-to-story-to-bdd traceability and stage transitions.
 
 ## Milestone 2 Definition of Done
 
 Milestone 2 is complete when:
 
-- `ethereal plan <feature-id>` works
-- `ec plan <feature-id>` works
-- `ethereal bdd <feature-id>` works
-- `ec bdd <feature-id>` works
-- `ethereal review-consistency <feature-id>` works
-- `ec review-consistency <feature-id>` works
-- plan artifact is created predictably
-- at least one story markdown file is created predictably
-- at least one `.feature` file is created predictably
-- traceability map is created predictably
-- consistency review artifact is created predictably
-- feature stage transitions are recorded
-- run logs capture token usage for each new stage
+* `ethereal plan <feature-id>` still works with the richer structure
+* `ec plan <feature-id>` still works with the richer structure
+* `ethereal bdd <feature-id>` works
+* `ec bdd <feature-id>` works
+* `ethereal review-consistency <feature-id>` works
+* `ec review-consistency <feature-id>` works
+* plan artifact is created predictably
+* at least one story markdown file is created predictably
+* at least one `.feature` file is created predictably
+* traceability map is created predictably
+* consistency review artifact is created predictably
+* feature stage transitions are recorded correctly
+* placeholder BDD generation is no longer done during `ideate()`
+* run logs capture token usage for each new stage
 
 ---
 
@@ -1002,19 +1051,46 @@ Build this first and nothing more:
 
 ### Should do
 
-- create `plan.md`
-- create one or more story files under `stories/`
-- create one or more `.feature` files under `bdd/`
-- create `traceability/traceability-map.json`
-- create `review/consistency-review.md`
-- update `feature.yaml` current stage after each successful command
-- write a run history entry for each stage
+* create or refine `plan.md`
+* create one or more story files under `stories/`
+* create one or more `.feature` files under `bdd/`
+* create `traceability/traceability-map.json`
+* create `review/consistency-review.md`
+* update `feature.yaml` or equivalent current stage after each successful command
+* write a run history entry for each stage
 
 Why this slice first:
 
-- it validates the complete planning-to-BDD chain
-- it proves traceability before any implementation work begins
-- it keeps model usage cheap while creating high-value structure
+* it validates the complete planning-to-BDD chain on top of the existing scaffold
+* it proves traceability before any implementation work begins
+* it keeps model usage cheap while creating high-value structure
+
+## Recommended First Vertical Slice
+
+Build this first and nothing more:
+
+### Slice
+
+1. Run `ethereal ideate "Add secure login audit history"`
+2. Run `ethereal plan feature-secure-login-audit-history`
+3. Run `ethereal bdd feature-secure-login-audit-history`
+4. Run `ethereal review-consistency feature-secure-login-audit-history`
+
+### Should do
+
+* create `plan.md`
+* create one or more story files under `stories/`
+* create one or more `.feature` files under `bdd/`
+* create `traceability/traceability-map.json`
+* create `review/consistency-review.md`
+* update `feature.yaml` current stage after each successful command
+* write a run history entry for each stage
+
+Why this slice first:
+
+* it validates the complete planning-to-BDD chain
+* it proves traceability before any implementation work begins
+* it keeps model usage cheap while creating high-value structure
 
 ## Recommended First Vertical Slice
 
@@ -1026,17 +1102,17 @@ Build this first and nothing more:
 
 ### Should do
 
-- create feature folder
-- write `feature.yaml`
-- write `ideation.md`
-- create run log json
-- print next-step guidance to terminal
+* create feature folder
+* write `feature.yaml`
+* write `ideation.md`
+* create run log json
+* print next-step guidance to terminal
 
 Why this slice first:
 
-- smallest useful loop
-- validates CLI, config, provider abstraction, file system, and logging
-- gives you visible progress fast
+* smallest useful loop
+* validates CLI, config, provider abstraction, file system, and logging
+* gives you visible progress fast
 
 ---
 
@@ -1104,20 +1180,22 @@ program.parse();
 
 Expose two entry points that run the same CLI:
 
-- `ethereal` as the primary command
-- `ec` as the short alias
+* `ethereal` as the primary command
+* `ec` as the short alias
 
-In npm package terms, that means the CLI package should publish both binaries and point them to the same compiled entry file:
+In npm package terms, that means the CLI package should publish both binaries and point them to the same compiled entry file.ts import { Command } from 'commander';
 
-```json
-{
-  "bin": {
-    "ethereal-claw": "dist/index.js",
-    "ethereal": "dist/index.js",
-    "ec": "dist/index.js"
-  }
-}
-```
+const program = new Command();
+
+program .name('ethereal-claw') .description('CLI orchestration layer for AI-assisted SDLC') .version('0.1.0');
+
+program .command('init') .description('Initialize CLAW in the current repository') .action(() => { console.log('Initialize command not implemented yet.'); });
+
+program .command('ideate') .description('Create a feature ideation artifact from a raw prompt') .argument('', 'Feature prompt') .action((prompt: string) => { console.log(`Ideate command not implemented yet: ${prompt}`); });
+
+program.parse();
+
+````
 
 ## `packages/core/src/agents/base-agent.ts`
 ```ts
@@ -1139,7 +1217,7 @@ export interface BaseAgent {
   readonly name: string;
   execute(input: AgentInput): Promise<AgentOutput>;
 }
-```
+````
 
 ## `packages/core/src/providers/llm-provider.ts`
 
@@ -1254,12 +1332,12 @@ export class MockProvider implements LlmProvider {
 
 ## Development Standards for This Repo
 
-- Use explicit names, not abbreviations.
-- Keep orchestration logic separate from provider logic.
-- Keep file-writing separate from agent reasoning.
-- Prefer vertical slices over big-bang framework building.
-- Every command should be testable with a mock provider.
-- Every generated artifact should have a stable path.
+* Use explicit names, not abbreviations.
+* Keep orchestration logic separate from provider logic.
+* Keep file-writing separate from agent reasoning.
+* Prefer vertical slices over big-bang framework building.
+* Every command should be testable with a mock provider.
+* Every generated artifact should have a stable path.
 
 ---
 
@@ -1267,28 +1345,81 @@ export class MockProvider implements LlmProvider {
 
 The repo base is ready when:
 
-- `npm install` works
-- `ethereal-claw init` exists
-- `ethereal-claw ideate "..."` creates a feature folder
-- artifacts are written to disk predictably
-- a mock provider can power the first end-to-end slice
-- run logs are created
-- unit tests exist for command parsing and feature creation
+* `npm install` works
+* `ethereal-claw init` exists
+* `ethereal-claw ideate "..."` creates a feature folder
+* artifacts are written to disk predictably
+* a mock provider can power the first end-to-end slice
+* run logs are created
+* unit tests exist for command parsing and feature creation
 
 ---
 
 ## Suggested Next Build Order
 
-1. Create the monorepo skeleton.
-2. Implement config loading.
-3. Implement mock provider.
-4. Implement feature directory creation.
-5. Implement `ethereal-claw ideate`.
-6. Add run logging.
-7. Add `ethereal-claw plan`.
-8. Add BDD generation.
-9. Add consistency review.
-10. Only then wire in real model providers.
+1. Complete the Milestone 2 shared model changes.
+2. Make `bdd` a first-class stage and command.
+3. Make `review-consistency` a first-class stage and command.
+4. Add traceability generation and validation.
+5. Remove placeholder BDD generation from `ideate()`.
+6. Refine `run()` after the new stages stabilize.
+7. Only then deepen real provider integrations and prompt sophistication.
+
+## Self-Hosting Strategy (Ethereal-CLAW building Ethereal-CLAW)
+
+### Guiding Principle
+
+Ethereal-CLAW can assist in building itself, but only in **controlled, review-gated phases** until Milestone 2 is fully stabilized.
+
+### Safe Self-Hosting Capabilities (Now)
+
+The system may safely assist with:
+
+* ideating new features for itself
+* refining plans for Milestone 2 work
+* drafting stories and acceptance criteria
+* drafting BDD scenarios
+* generating traceability maps
+* identifying ambiguity and gaps
+* proposing implementation changes for human review
+
+### Restricted Capabilities (Not Yet Safe)
+
+The system should NOT autonomously:
+
+* define its own feature scope without review
+* implement changes from unverified stories or BDD
+* modify orchestrator logic and approve its own changes
+* advance workflow stages without traceability validation
+
+### Required Safety Conditions for Deeper Self-Hosting
+
+Before enabling stronger autonomy, the following must be true:
+
+* `bdd` is a first-class workflow stage
+* `review-consistency` is a first-class workflow stage
+* traceability map is generated and validated
+* placeholder BDD generation is removed from `ideate()`
+* plan outputs are structured and deterministic
+* stage transitions are covered by tests
+* at least one full Milestone 2 vertical slice runs successfully
+
+### Recommended Self-Hosting Workflow
+
+Use Ethereal-CLAW to implement its own Milestone 2 features with human gates:
+
+1. `ethereal ideate "Improve BDD traceability"`
+2. `ethereal plan <feature>`
+3. `ethereal bdd <feature>`
+4. `ethereal review-consistency <feature>`
+5. Human reviews artifacts
+6. Human approves implementation work
+7. Ethereal proposes implementation
+8. Human approves PR
+
+### Key Rule
+
+> Ethereal-CLAW may assist in building itself, but may not be the final authority on correctness.
 
 ---
 
@@ -1298,19 +1429,19 @@ Use **CLAW** as a product nickname, but keep code names descriptive.
 
 CLI naming convention:
 
-- primary command: `ethereal`
-- short alias: `ec`
-- repo name: `ethereal-claw`
-- internal term: `workflow orchestrator`
+* primary command: `ethereal`
+* short alias: `ec`
+* repo name: `ethereal-claw`
+* internal term: `workflow orchestrator`
 
 Example:
 
-- product nickname: CLAW
-- primary CLI command: `ethereal`
-- short CLI alias: `ec`
-- repo name: `ethereal-claw`
-- npm scope: `@ethereal-claw/*`
-- internal term: `workflow orchestrator`
+* product nickname: CLAW
+* primary CLI command: `ethereal`
+* short CLI alias: `ec`
+* repo name: `ethereal-claw`
+* npm scope: `@ethereal-claw/*`
+* internal term: `workflow orchestrator`
 
 This gives you a memorable brand without making the codebase silly.
 
@@ -1334,130 +1465,24 @@ The first version is intentionally narrow:
 
 ---
 
-## Milestone 1 Scaffold — Exact Starter Layout
+## Historical Note — Milestone 1 Scaffold
 
-This is the first real implementation target.
-
-### Goal
-
-A runnable local CLI that supports:
-
-- `ethereal init`
-- `ec init`
-- `ethereal ideate "..."`
-- `ec ideate "..."`
-
-and does all of the following:
-
-- creates the local config file if missing
-- creates `features/` and `runs/`
-- creates a feature workspace
-- writes `feature.yaml`
-- writes `ideation.md`
-- writes a run log JSON file
-- tracks estimated and actual token usage through the budget manager
-- uses the mock provider by default
-
-### Initial file set
-
-```text
-ethereal-claw/
-├─ package.json
-├─ tsconfig.base.json
-├─ .gitignore
-├─ README.md
-├─ config/
-│  └─ ethereal-claw.config.example.yaml
-├─ features/
-│  └─ .gitkeep
-├─ runs/
-│  └─ .gitkeep
-├─ packages/
-│  ├─ cli/
-│  │  ├─ package.json
-│  │  ├─ tsconfig.json
-│  │  └─ src/
-│  │     ├─ index.ts
-│  │     └─ commands/
-│  │        ├─ init-command.ts
-│  │        └─ ideate-command.ts
-│  ├─ core/
-│  │  ├─ package.json
-│  │  ├─ tsconfig.json
-│  │  └─ src/
-│  │     ├─ agents/
-│  │     │  ├─ base-agent.ts
-│  │     │  └─ ideation-agent.ts
-│  │     ├─ artifacts/
-│  │     │  ├─ artifact-service.ts
-│  │     │  └─ feature-structure-service.ts
-│  │     ├─ budget/
-│  │     │  ├─ budget-manager.ts
-│  │     │  ├─ token-estimator.ts
-│  │     │  └─ token-usage-record.ts
-│  │     ├─ config/
-│  │     │  ├─ config-schema.ts
-│  │     │  └─ load-config.ts
-│  │     ├─ providers/
-│  │     │  ├─ llm-provider.ts
-│  │     │  └─ mock-provider.ts
-│  │     ├─ runs/
-│  │     │  └─ run-log-service.ts
-│  │     └─ utils/
-│  │        ├─ file-system.ts
-│  │        ├─ slugify.ts
-│  │        └─ timestamps.ts
-│  └─ shared/
-│     ├─ package.json
-│     ├─ tsconfig.json
-│     └─ src/
-│        └─ types/
-│           ├─ feature.ts
-│           └─ run.ts
-└─ tests/
-   └─ unit/
-```
-
-### Milestone 1 build order
-
-1. Create workspace root files.
-2. Wire both CLI binaries: `ethereal` and `ec`.
-3. Implement config loading.
-4. Implement mock provider.
-5. Implement token estimator and budget manager.
-6. Implement feature structure service.
-7. Implement run log service.
-8. Implement `init` command.
-9. Implement `ideate` command.
-10. Add a minimal unit test pass.
-
-### Milestone 1 done when
-
-- `npm install` succeeds
-- `npm run build` succeeds
-- `ethereal init` works
-- `ec init` works
-- `ethereal ideate "Add secure login audit history"` works
-- `ec ideate "Add secure login audit history"` works
-- feature artifacts are written to disk
-- run log is written to disk
-- budget tracking is visible in the run log
+The following scaffold section is kept as a historical reference for how the project started. The live repo has already moved beyond this point.
 
 ## What I would build next
 
-If continuing from this blueprint after Milestone 1, the next concrete deliverable should be:
+If continuing from the current repo state, the next concrete deliverable should be:
 
-**a real implementation for Milestone 2** with:
+**a real implementation for the revised Milestone 2** with:
 
-- `plan` command
-- `bdd` command
-- `review-consistency` command
-- planning agent
-- story writer agent
-- BDD writer agent
-- consistency reviewer agent
-- prompt file loader
-- traceability map generation
-- unit tests for traceability and stage transitions
+* refinement of the existing `plan` stage
+* `bdd` command
+* `review-consistency` command
+* BDD agent
+* consistency reviewer agent
+* prompt file loader
+* traceability map generation
+* shared types for story, acceptance criteria, and traceability
+* unit tests for traceability and stage transitions
 
-That is the smallest serious foundation for moving from ideation into implementation-ready behavior specifications.
+That is the smallest serious foundation for moving from ideation into implementation-ready behavior specifications on top of the code that already exists.
