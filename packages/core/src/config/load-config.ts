@@ -14,7 +14,7 @@ export async function loadConfig(configPath?: string): Promise<ClawConfig> {
   const usingFallback = !existsSync(candidate);
   const resolvedPath = usingFallback ? bundledConfigExamplePath : candidate;
 
-  if (usingFallback) {
+  if (usingFallback && !process.env["CI"] && !process.env["ETHEREAL_QUIET"]) {
     process.stderr.write(
       `[ethereal-claw] No config found at "${candidate}". Using bundled defaults (mock provider). Run "ethereal init" to create a local config.\n`
     );

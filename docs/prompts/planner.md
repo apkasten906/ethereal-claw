@@ -16,7 +16,7 @@ The planner turns an existing feature workspace into a concrete execution plan. 
 
 ## Expected Artifact Content
 
-`features/<feature-slug>/plan.md` should include:
+`ec/features/<feature-slug>/plan.md` should include:
 
 - story breakdown
 - dependency order
@@ -24,7 +24,7 @@ The planner turns an existing feature workspace into a concrete execution plan. 
 - review checkpoints
 - unresolved planning risks
 
-`features/<feature-slug>/implementation/tasks.md` should provide a concise task checklist.
+`ec/features/<feature-slug>/implementation/tasks.md` should provide a concise task checklist.
 
 ## Quality Checklist
 

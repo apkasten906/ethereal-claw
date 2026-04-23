@@ -37,8 +37,8 @@ export class WorkflowOrchestrator {
     readonly rootDir = process.cwd()
   ) {
     this.budget = new BudgetManager(config.budget);
-    this.artifacts = new ArtifactService(this.rootDir);
-    this.featureStructure = new FeatureStructureService(this.rootDir);
+    this.artifacts = new ArtifactService(this.rootDir, config.baseDirectory);
+    this.featureStructure = new FeatureStructureService(this.rootDir, config.baseDirectory);
     this.agents = createAgents(provider);
   }
 

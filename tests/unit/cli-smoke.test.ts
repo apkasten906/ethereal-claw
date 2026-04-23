@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { access, copyFile, mkdir, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { access, copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
@@ -49,8 +49,10 @@ describe("CLI smoke", () => {
     await runCli(root, ["init"]);
 
     await expect(access(path.join(root, "config", "ethereal-claw.config.yaml"))).resolves.toBeUndefined();
-    await expect(access(path.join(root, "features"))).resolves.toBeUndefined();
-    await expect(access(path.join(root, "runs"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "ec", "features"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "ec", "runs"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "features"))).rejects.toThrow();
+    await expect(access(path.join(root, "runs"))).rejects.toThrow();
   });
 
   it("init does not overwrite existing config", async () => {
@@ -77,14 +79,16 @@ describe("CLI smoke", () => {
     const { stdout } = await runCli(root, ["ideate", "Add secure login audit history", "--dry-run"]);
     const parsed = JSON.parse(stdout.trim());
 
-    await expect(access(path.join(root, "features", "feature-add-secure-login-audit-history", "ideation.md"))).resolves.toBeUndefined();
-    await expect(access(path.join(root, "features", "feature-add-secure-login-audit-history", "stories", "001-initial-story.md"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "ec", "features", "feature-add-secure-login-audit-history", "ideation.md"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "ec", "features", "feature-add-secure-login-audit-history", "stories", "001-initial-story.md"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "features"))).rejects.toThrow();
+    await expect(access(path.join(root, "runs"))).rejects.toThrow();
 
-    const runFiles = await readdir(path.join(root, "runs"));
+    const runFiles = await readdir(path.join(root, "ec", "runs"));
     expect(runFiles).toHaveLength(1);
 
     const runLog = JSON.parse(
-      await readFile(path.join(root, "runs", runFiles[0] ?? ""), "utf8")
+      await readFile(path.join(root, "ec", "runs", runFiles[0] ?? ""), "utf8")
     );
 
     expect(parsed.executions.length).toBeGreaterThan(0);
@@ -102,7 +106,7 @@ describe("CLI smoke", () => {
 
     expect(parsed.featureSlug).toBe("feature-add-secure-login-audit-history");
     await expect(
-      access(path.join(root, "features", "feature-add-secure-login-audit-history", "plan.md"))
+      access(path.join(root, "ec", "features", "feature-add-secure-login-audit-history", "plan.md"))
     ).resolves.toBeUndefined();
   });
 
@@ -115,7 +119,34 @@ describe("CLI smoke", () => {
 
     expect(parsed.map((run: { stage: string }) => run.stage)).toEqual(["plan", "implement", "test", "review"]);
 
-    const runFiles = await readdir(path.join(root, "runs"));
+    const runFiles = await readdir(path.join(root, "ec", "runs"));
     expect(runFiles).toHaveLength(5);
+  });
+
+  it("uses a configured artifact base directory override", async () => {
+    const root = await createTempWorkspace();
+    await mkdir(path.join(root, "config"), { recursive: true });
+    await writeFile(
+      path.join(root, "config", "ethereal-claw.config.yaml"),
+      [
+        "provider: mock",
+        "baseDirectory: artifacts",
+        "budget:",
+        "  runBudgetUsd: 5",
+        "  warnAtPercent: 50",
+        "  confirmAtPercent: 75",
+        "  stopAtPercent: 90",
+        "  hardCapPercent: 100",
+        "providers: {}",
+        ""
+      ].join("\n")
+    );
+
+    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run"]);
+    await runCli(root, ["plan", "feature-add-secure-login-audit-history", "--dry-run"]);
+
+    await expect(access(path.join(root, "artifacts", "features", "feature-add-secure-login-audit-history", "ideation.md"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "artifacts", "features", "feature-add-secure-login-audit-history", "plan.md"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "artifacts", "runs"))).resolves.toBeUndefined();
   });
 });

@@ -42,6 +42,7 @@ const budgetSchema = z.object({
 
 export const clawConfigSchema = z.object({
   provider: z.enum(["mock", "openai", "github"]).default("mock"),
+  baseDirectory: z.string().min(1).default("ec"),
   budget: budgetSchema.default(createDefaultBudget),
   providers: z.object({
     openai: z.object({

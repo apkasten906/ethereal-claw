@@ -1,4 +1,5 @@
 provider: mock
+baseDirectory: ec
 budget:
   runBudgetUsd: 5
   warnAtPercent: 50

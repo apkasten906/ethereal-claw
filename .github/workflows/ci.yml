@@ -92,3 +92,27 @@ jobs:
 
       - name: Test
         run: npm run test
+
+  guard-binary-docs:
+    name: No Binary Files In Docs
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Fail on binary files added under docs/
+        run: |
+          BINARIES=$(git diff --name-only --diff-filter=A origin/${{ github.base_ref }}...HEAD -- 'docs/**' \
+            | xargs -r file --mime-type \
+            | grep -v 'text/' \
+            | grep -v 'inode/x-empty' \
+            | cut -d: -f1)
+          if [ -n "$BINARIES" ]; then
+            echo "Binary files added under docs/:"
+            echo "$BINARIES"
+            exit 1
+          fi

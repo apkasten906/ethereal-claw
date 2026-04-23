@@ -13,10 +13,17 @@ const featureStatuses = new Set<FeatureRecord["status"]>([
 ]);
 
 export class FeatureStructureService {
-  constructor(private readonly rootDir = process.cwd()) {}
+  private readonly artifactRoot: string;
+
+  constructor(
+    private readonly rootDir = process.cwd(),
+    artifactBaseDirectory = "ec"
+  ) {
+    this.artifactRoot = resolveWithin(this.rootDir, artifactBaseDirectory);
+  }
 
   featureRoot(slug: string): string {
-    return resolveWithin(this.rootDir, "features", assertFeatureSlug(slug));
+    return resolveWithin(this.artifactRoot, "features", assertFeatureSlug(slug));
   }
 
   featureMetadataPath(slug: string): string {

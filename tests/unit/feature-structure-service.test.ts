@@ -26,7 +26,7 @@ describe("FeatureStructureService", () => {
       updatedAt: "2026-04-17T00:00:00.000Z"
     });
 
-    await expect(access(path.join(root, "features", "feature-auth-refresh", "stories"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "ec", "features", "feature-auth-refresh", "stories"))).resolves.toBeUndefined();
   });
 
   it("serializes feature metadata safely as YAML", async () => {
@@ -44,7 +44,7 @@ describe("FeatureStructureService", () => {
     });
 
     const featureYaml = await readFile(
-      path.join(root, "features", "feature-title-with-punctuation", "feature.yaml"),
+      path.join(root, "ec", "features", "feature-title-with-punctuation", "feature.yaml"),
       "utf8"
     );
 
@@ -76,9 +76,9 @@ describe("FeatureStructureService", () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-"));
     tempDirs.push(root);
 
-    await mkdir(path.join(root, "features", "feature-auth-refresh"), { recursive: true });
+    await mkdir(path.join(root, "ec", "features", "feature-auth-refresh"), { recursive: true });
     await writeFile(
-      path.join(root, "features", "feature-auth-refresh", "feature.yaml"),
+      path.join(root, "ec", "features", "feature-auth-refresh", "feature.yaml"),
       [
         "slug: feature-auth-refresh",
         "title: Auth Refresh",
@@ -93,5 +93,22 @@ describe("FeatureStructureService", () => {
     const service = new FeatureStructureService(root);
 
     await expect(service.loadFeature("feature-auth-refresh")).rejects.toThrow("Invalid feature metadata");
+  });
+
+  it("supports an artifact base directory override", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-"));
+    tempDirs.push(root);
+
+    const service = new FeatureStructureService(root, "artifacts");
+    await service.createWorkspace({
+      slug: "feature-auth-refresh",
+      title: "Auth Refresh",
+      request: "refresh tokens for admins",
+      status: "draft",
+      createdAt: "2026-04-17T00:00:00.000Z",
+      updatedAt: "2026-04-17T00:00:00.000Z"
+    });
+
+    await expect(access(path.join(root, "artifacts", "features", "feature-auth-refresh", "feature.yaml"))).resolves.toBeUndefined();
   });
 });

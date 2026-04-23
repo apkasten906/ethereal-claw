@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { access, mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -74,5 +74,28 @@ describe("ArtifactService", () => {
     await expect(
       service.writeFeatureArtifact("feature-ok", "..\\..\\escape.txt", "content")
     ).rejects.toThrow(/escapes root directory/i);
+  });
+
+  it("writes artifacts under the configured artifact base directory", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-artifacts-"));
+    tempDirs.push(root);
+
+    const service = new ArtifactService(root, "artifacts");
+    await service.ensureRuntimeDirectories();
+    await service.writeFeatureArtifact("feature-ok", "plan.md", "content");
+    await service.writeRunLog({
+      id: "run-123",
+      featureSlug: "feature-ok",
+      stage: "plan",
+      startedAt: "2026-04-17T00:00:00.000Z",
+      completedAt: "2026-04-17T00:00:01.000Z",
+      success: true,
+      dryRun: true,
+      executions: [],
+      notes: []
+    });
+
+    await expect(access(path.join(root, "artifacts", "features", "feature-ok", "plan.md"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "artifacts", "runs", "run-123.json"))).resolves.toBeUndefined();
   });
 });

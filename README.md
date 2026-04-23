@@ -11,8 +11,8 @@ Initial scaffold for `0.1.0`.
 - `packages/cli`: command-line entrypoint
 - `packages/core`: orchestration, artifacts, providers, agents, budget, logging
 - `packages/shared`: shared types and constants
-- `features/`: stable feature workspaces
-- `runs/`: execution logs and run artifacts
+- `ec/features/`: stable feature workspaces
+- `ec/runs/`: execution logs and run artifacts
 - `docs/`: architecture, workflow, prompts, command reference
 
 ## Documentation

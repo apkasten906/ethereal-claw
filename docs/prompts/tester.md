@@ -15,7 +15,7 @@ The tester maps planned behavior and implementation work to validation coverage.
 
 ## Expected Artifact Content
 
-`features/<feature-slug>/tests/test-plan.md` should include:
+`ec/features/<feature-slug>/tests/test-plan.md` should include:
 
 - unit test candidates
 - integration test candidates
@@ -23,7 +23,7 @@ The tester maps planned behavior and implementation work to validation coverage.
 - acceptance-criteria mapping
 - known coverage gaps
 
-`features/<feature-slug>/tests/generated-tests.md` should include generated test candidates or placeholders for later implementation.
+`ec/features/<feature-slug>/tests/generated-tests.md` should include generated test candidates or placeholders for later implementation.
 
 ## Quality Checklist
 

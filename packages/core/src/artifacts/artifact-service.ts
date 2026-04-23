@@ -5,30 +5,37 @@ import { assertFeatureSlug, ensureDir, resolveWithin, writeFileEnsured } from ".
 const runIdPattern = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/;
 
 export class ArtifactService {
-  constructor(private readonly rootDir = process.cwd()) {}
+  private readonly artifactRoot: string;
+
+  constructor(
+    private readonly rootDir = process.cwd(),
+    artifactBaseDirectory = "ec"
+  ) {
+    this.artifactRoot = resolveWithin(this.rootDir, artifactBaseDirectory);
+  }
 
   async writeFeatureArtifact(featureSlug: string, relativePath: string, content: string): Promise<void> {
     const safeFeatureSlug = assertFeatureSlug(featureSlug);
-    const featureRoot = resolveWithin(this.rootDir, "features", safeFeatureSlug);
+    const featureRoot = resolveWithin(this.artifactRoot, "features", safeFeatureSlug);
     const targetPath = resolveWithin(featureRoot, relativePath);
     await writeFileEnsured(targetPath, content);
   }
 
   async ensureRuntimeDirectories(): Promise<void> {
     await Promise.all([
-      ensureDir(path.join(this.rootDir, "features")),
-      ensureDir(path.join(this.rootDir, "runs"))
+      ensureDir(path.join(this.artifactRoot, "features")),
+      ensureDir(path.join(this.artifactRoot, "runs"))
     ]);
   }
 
   async writeRunLog(run: RunLog): Promise<void> {
     const safeRunId = this.assertRunId(run.id);
-    const runsDir = resolveWithin(this.rootDir, "runs");
+    const runsDir = resolveWithin(this.artifactRoot, "runs");
     const targetPath = resolveWithin(runsDir, `${safeRunId}.json`);
     const safeFeatureSlug = assertFeatureSlug(run.featureSlug);
     await writeFileEnsured(targetPath, `${JSON.stringify(run, null, 2)}\n`);
     await writeFileEnsured(
-      resolveWithin(this.rootDir, "features", safeFeatureSlug, "run-history", `${safeRunId}.json`),
+      resolveWithin(this.artifactRoot, "features", safeFeatureSlug, "run-history", `${safeRunId}.json`),
       `${JSON.stringify(run, null, 2)}\n`
     );
   }

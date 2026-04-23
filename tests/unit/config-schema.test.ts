@@ -12,6 +12,14 @@ describe("clawConfigSchema", () => {
     });
   });
 
+  it("defaults the artifact base directory", () => {
+    expect(clawConfigSchema.parse({ provider: "mock" }).baseDirectory).toBe("ec");
+  });
+
+  it("accepts an artifact base directory override", () => {
+    expect(clawConfigSchema.parse({ provider: "mock", baseDirectory: "artifacts" }).baseDirectory).toBe("artifacts");
+  });
+
   it("creates fresh default objects for each parse", () => {
     const first = clawConfigSchema.parse({ provider: "mock" });
     const second = clawConfigSchema.parse({ provider: "mock" });

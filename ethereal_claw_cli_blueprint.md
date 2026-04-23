@@ -1,4 +1,4 @@
-# Ethereal-CLAW CLI — Base Repo Blueprint v3
+# Ethereal-CLAW CLI — Base Repo Blueprint - v4
 
 ## Purpose
 
@@ -152,10 +152,11 @@ ethereal-claw/
 ├─ config/
 │  ├─ ethereal-claw.config.example.yaml
 │  └─ agent-policies.yaml
-├─ features/
-│  └─ .gitkeep
-├─ runs/
-│  └─ .gitkeep
+├─ ec/
+│  ├─ features/
+│  ├─ runs/
+│  ├─ cache/        (future)
+│  └─ temp/         (future)
 ├─ packages/
 │  ├─ cli/
 │  │  ├─ package.json
@@ -225,37 +226,81 @@ ethereal-claw/
    └─ fixtures/
 ```
 
+````
+
 ---
 
 ## Feature Artifact Structure
 
-Each feature gets a stable workspace.
+All artifacts live under `/ec`.
 
 ```text
-features/
-└─ feature-auth-refresh/
-   ├─ feature.yaml
-   ├─ ideation.md
-   ├─ plan.md
-   ├─ stories/
-   │  ├─ 001-session-timeout.md
-   │  └─ 002-token-refresh.md
-   ├─ bdd/
-   │  ├─ 001-session-timeout.feature
-   │  └─ 002-token-refresh.feature
-   ├─ implementation/
-   │  ├─ tasks.md
-   │  └─ change-summary.md
-   ├─ tests/
-   │  ├─ test-plan.md
-   │  └─ generated-tests.md
-   ├─ review/
-   │  ├─ consistency-review.md
-   │  └─ code-review.md
-   └─ run-history/
-      ├─ run-2026-04-17T090000Z.json
-      └─ run-2026-04-17T093000Z.json
-```
+ec/
+└─ features/
+   └─ feature-auth-refresh/
+      ├─ feature.yaml
+      ├─ ideation.md
+      ├─ plan.md
+      ├─ stories/
+      │  ├─ 001-session-timeout.md
+      │  └─ 002-token-refresh.md
+      ├─ bdd/
+      │  ├─ 001-session-timeout.feature
+      │  └─ 002-token-refresh.feature
+      ├─ implementation/
+      │  ├─ tasks.md
+      │  └─ change-summary.md
+      ├─ tests/
+      │  ├─ test-plan.md
+      │  └─ generated-tests.md
+      ├─ review/
+      │  ├─ consistency-review.md
+      │  └─ code-review.md
+      ├─ traceability/
+      │  └─ traceability-map.json
+      └─ run-history/
+         ├─ run-2026-04-17T090000Z.json
+         └─ run-2026-04-17T093000Z.json
+````
+
+---
+
+## Artifact Design Principle — Human vs Agent Readability
+
+Artifacts should serve **two audiences**:
+
+### Human-facing
+
+* Markdown files (`.md`, `.feature`)
+* Readable, reviewable, and editable
+* Used for decision-making and validation
+
+### Agent-facing
+
+* Structured, deterministic formats (`.json`, `.yaml`)
+* Used for orchestration, traceability, and validation
+* Must be stable and machine-parseable
+
+### Rule
+
+> Every critical artifact should have a **stable structure for agents** and a **clear representation for humans**.
+
+Examples:
+
+| Artifact     | Human Form               | Agent Form                 |
+| ------------ | ------------------------ | -------------------------- |
+| Stories      | `.md`                    | structured `Story` type    |
+| AC           | numbered list            | typed `AcceptanceCriteria` |
+| BDD          | `.feature`               | parsed scenario model      |
+| Traceability | summary `.md` (optional) | `traceability-map.json`    |
+
+This ensures:
+
+* agents can operate deterministically
+* humans can review and correct output
+* state transitions are reliable
+
+---
 
 ---
 

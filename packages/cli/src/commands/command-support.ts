@@ -1,3 +1,4 @@
+import path from "node:path";
 import { FeatureStructureService, GitHubModelProvider, loadConfig, MockProvider, OpenAiProvider, WorkflowOrchestrator } from "@ethereal-claw/core";
 
 export async function createOrchestrator(): Promise<WorkflowOrchestrator> {
@@ -18,7 +19,8 @@ export async function resolveStageRequest(featureSlug: string, requestOverride: 
     return requestOverride;
   }
 
-  const featureStructure = new FeatureStructureService(rootDir);
+  const config = await loadConfig(path.join(rootDir, "config", "ethereal-claw.config.yaml"));
+  const featureStructure = new FeatureStructureService(rootDir, config.baseDirectory);
   const feature = await featureStructure.loadFeature(featureSlug);
 
   if (!feature.request.trim()) {
