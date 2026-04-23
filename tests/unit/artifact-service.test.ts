@@ -3,6 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { ArtifactService } from "../../packages/core/src/artifacts/artifact-service.js";
+import { clawConfigSchema } from "../../packages/core/src/config/config-schema.js";
+import { resolveWorkspacePaths } from "../../packages/core/src/config/workspace-paths.js";
 
 const tempDirs: string[] = [];
 
@@ -12,11 +14,15 @@ afterEach(async () => {
 });
 
 describe("ArtifactService", () => {
+  function createService(root: string, workspace = clawConfigSchema.parse({}).workspace): ArtifactService {
+    return new ArtifactService(resolveWorkspacePaths(root, workspace));
+  }
+
   it("rejects path traversal in feature slugs", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-artifacts-"));
     tempDirs.push(root);
 
-    const service = new ArtifactService(root);
+    const service = createService(root);
 
     await expect(
       service.writeFeatureArtifact("../escape", "plan.md", "content")
@@ -27,7 +33,7 @@ describe("ArtifactService", () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-artifacts-"));
     tempDirs.push(root);
 
-    const service = new ArtifactService(root);
+    const service = createService(root);
 
     await expect(
       service.writeRunLog({
@@ -48,7 +54,7 @@ describe("ArtifactService", () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-artifacts-"));
     tempDirs.push(root);
 
-    const service = new ArtifactService(root);
+    const service = createService(root);
 
     await expect(
       service.writeRunLog({
@@ -69,18 +75,23 @@ describe("ArtifactService", () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-artifacts-"));
     tempDirs.push(root);
 
-    const service = new ArtifactService(root);
+    const service = createService(root);
 
     await expect(
       service.writeFeatureArtifact("feature-ok", "..\\..\\escape.txt", "content")
     ).rejects.toThrow(/escapes root directory/i);
   });
 
-  it("writes artifacts under the configured artifact base directory", async () => {
+  it("writes artifacts under the configured workspace directories", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-artifacts-"));
     tempDirs.push(root);
 
-    const service = new ArtifactService(root, "artifacts");
+    const service = createService(root, {
+      rootDirectory: "./artifacts",
+      configDirectory: "./artifacts/config",
+      featuresDirectory: "./artifacts/features",
+      runsDirectory: "./artifacts/runs"
+    });
     await service.ensureRuntimeDirectories();
     await service.writeFeatureArtifact("feature-ok", "plan.md", "content");
     await service.writeRunLog({

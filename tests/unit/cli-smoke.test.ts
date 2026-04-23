@@ -48,9 +48,13 @@ describe("CLI smoke", () => {
 
     await runCli(root, ["init"]);
 
-    await expect(access(path.join(root, "config", "ethereal-claw.config.yaml"))).resolves.toBeUndefined();
-    await expect(access(path.join(root, "ec", "features"))).resolves.toBeUndefined();
-    await expect(access(path.join(root, "ec", "runs"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, ".ec", "config", "project.yaml"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, ".ec", "config", "agent-policies.yaml"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, ".ec", "features"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, ".ec", "runs"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, ".ec", "cache"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, ".ec", "temp"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "config", "ethereal-claw.config.yaml"))).rejects.toThrow();
     await expect(access(path.join(root, "features"))).rejects.toThrow();
     await expect(access(path.join(root, "runs"))).rejects.toThrow();
   });
@@ -58,8 +62,8 @@ describe("CLI smoke", () => {
   it("init does not overwrite existing config", async () => {
     const root = await createTempWorkspace();
 
-    await mkdir(path.join(root, "config"), { recursive: true });
-    const existing = path.join(root, "config", "ethereal-claw.config.yaml");
+    await mkdir(path.join(root, ".ec", "config"), { recursive: true });
+    const existing = path.join(root, ".ec", "config", "project.yaml");
     await copyFile(exampleConfig, existing);
     const before = await readFile(existing, "utf8");
 
@@ -73,22 +77,22 @@ describe("CLI smoke", () => {
 
   it("ideate writes feature artifacts and a run log with budget data", async () => {
     const root = await createTempWorkspace();
-    await mkdir(path.join(root, "config"), { recursive: true });
-    await copyFile(exampleConfig, path.join(root, "config", "ethereal-claw.config.yaml"));
+    await mkdir(path.join(root, ".ec", "config"), { recursive: true });
+    await copyFile(exampleConfig, path.join(root, ".ec", "config", "project.yaml"));
 
     const { stdout } = await runCli(root, ["ideate", "Add secure login audit history", "--dry-run"]);
     const parsed = JSON.parse(stdout.trim());
 
-    await expect(access(path.join(root, "ec", "features", "feature-add-secure-login-audit-history", "ideation.md"))).resolves.toBeUndefined();
-    await expect(access(path.join(root, "ec", "features", "feature-add-secure-login-audit-history", "stories", "001-initial-story.md"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, ".ec", "features", "feature-add-secure-login-audit-history", "ideation.md"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, ".ec", "features", "feature-add-secure-login-audit-history", "stories", "001-initial-story.md"))).resolves.toBeUndefined();
     await expect(access(path.join(root, "features"))).rejects.toThrow();
     await expect(access(path.join(root, "runs"))).rejects.toThrow();
 
-    const runFiles = await readdir(path.join(root, "ec", "runs"));
+    const runFiles = await readdir(path.join(root, ".ec", "runs"));
     expect(runFiles).toHaveLength(1);
 
     const runLog = JSON.parse(
-      await readFile(path.join(root, "ec", "runs", runFiles[0] ?? ""), "utf8")
+      await readFile(path.join(root, ".ec", "runs", runFiles[0] ?? ""), "utf8")
     );
 
     expect(parsed.executions.length).toBeGreaterThan(0);
@@ -106,7 +110,7 @@ describe("CLI smoke", () => {
 
     expect(parsed.featureSlug).toBe("feature-add-secure-login-audit-history");
     await expect(
-      access(path.join(root, "ec", "features", "feature-add-secure-login-audit-history", "plan.md"))
+      access(path.join(root, ".ec", "features", "feature-add-secure-login-audit-history", "plan.md"))
     ).resolves.toBeUndefined();
   });
 
@@ -119,18 +123,22 @@ describe("CLI smoke", () => {
 
     expect(parsed.map((run: { stage: string }) => run.stage)).toEqual(["plan", "implement", "test", "review"]);
 
-    const runFiles = await readdir(path.join(root, "ec", "runs"));
+    const runFiles = await readdir(path.join(root, ".ec", "runs"));
     expect(runFiles).toHaveLength(5);
   });
 
-  it("uses a configured artifact base directory override", async () => {
+  it("uses configured workspace directory overrides", async () => {
     const root = await createTempWorkspace();
-    await mkdir(path.join(root, "config"), { recursive: true });
+    await mkdir(path.join(root, ".ec", "config"), { recursive: true });
     await writeFile(
-      path.join(root, "config", "ethereal-claw.config.yaml"),
+      path.join(root, ".ec", "config", "project.yaml"),
       [
         "provider: mock",
-        "baseDirectory: artifacts",
+        "workspace:",
+        "  rootDirectory: ./artifacts",
+        "  configDirectory: ./artifacts/config",
+        "  featuresDirectory: ./artifacts/features",
+        "  runsDirectory: ./artifacts/runs",
         "budget:",
         "  runBudgetUsd: 5",
         "  warnAtPercent: 50",

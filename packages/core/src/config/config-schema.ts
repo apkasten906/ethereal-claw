@@ -8,8 +8,19 @@ const defaultBudget = {
   hardCapPercent: 100
 };
 
+const defaultWorkspace = {
+  rootDirectory: "./.ec",
+  configDirectory: "./.ec/config",
+  featuresDirectory: "./.ec/features",
+  runsDirectory: "./.ec/runs"
+};
+
 function createDefaultBudget(): typeof defaultBudget {
   return { ...defaultBudget };
+}
+
+function createDefaultWorkspace(): typeof defaultWorkspace {
+  return { ...defaultWorkspace };
 }
 
 const budgetSchema = z.object({
@@ -42,7 +53,12 @@ const budgetSchema = z.object({
 
 export const clawConfigSchema = z.object({
   provider: z.enum(["mock", "openai", "github"]).default("mock"),
-  baseDirectory: z.string().min(1).default("ec"),
+  workspace: z.object({
+    rootDirectory: z.string().min(1).default(defaultWorkspace.rootDirectory),
+    configDirectory: z.string().min(1).default(defaultWorkspace.configDirectory),
+    featuresDirectory: z.string().min(1).default(defaultWorkspace.featuresDirectory),
+    runsDirectory: z.string().min(1).default(defaultWorkspace.runsDirectory)
+  }).default(createDefaultWorkspace),
   budget: budgetSchema.default(createDefaultBudget),
   providers: z.object({
     openai: z.object({

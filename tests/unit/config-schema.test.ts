@@ -12,12 +12,30 @@ describe("clawConfigSchema", () => {
     });
   });
 
-  it("defaults the artifact base directory", () => {
-    expect(clawConfigSchema.parse({ provider: "mock" }).baseDirectory).toBe("ec");
+  it("defaults the workspace directories", () => {
+    expect(clawConfigSchema.parse({ provider: "mock" }).workspace).toEqual({
+      rootDirectory: "./.ec",
+      configDirectory: "./.ec/config",
+      featuresDirectory: "./.ec/features",
+      runsDirectory: "./.ec/runs"
+    });
   });
 
-  it("accepts an artifact base directory override", () => {
-    expect(clawConfigSchema.parse({ provider: "mock", baseDirectory: "artifacts" }).baseDirectory).toBe("artifacts");
+  it("accepts workspace directory overrides", () => {
+    expect(clawConfigSchema.parse({
+      provider: "mock",
+      workspace: {
+        rootDirectory: "./artifacts",
+        configDirectory: "./artifacts/config",
+        featuresDirectory: "./artifacts/features",
+        runsDirectory: "./artifacts/runs"
+      }
+    }).workspace).toEqual({
+      rootDirectory: "./artifacts",
+      configDirectory: "./artifacts/config",
+      featuresDirectory: "./artifacts/features",
+      runsDirectory: "./artifacts/runs"
+    });
   });
 
   it("creates fresh default objects for each parse", () => {

@@ -3,6 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { FeatureStructureService } from "../../packages/core/src/artifacts/feature-structure-service.js";
+import { clawConfigSchema } from "../../packages/core/src/config/config-schema.js";
+import { resolveWorkspacePaths } from "../../packages/core/src/config/workspace-paths.js";
 import { resolveStageRequest } from "../../packages/cli/src/commands/command-support.js";
 
 const originalCwd = process.cwd();
@@ -15,17 +17,21 @@ afterEach(async () => {
 });
 
 describe("resolveStageRequest", () => {
+  function createFeatureStructure(root: string): FeatureStructureService {
+    return new FeatureStructureService(resolveWorkspacePaths(root, clawConfigSchema.parse({}).workspace));
+  }
+
   it("loads the saved feature request when no override is provided", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-command-support-"));
     tempDirs.push(root);
     process.chdir(root);
-    await mkdir(path.join(root, "config"), { recursive: true });
+    await mkdir(path.join(root, ".ec", "config"), { recursive: true });
     await writeFile(
-      path.join(root, "config", "ethereal-claw.config.yaml"),
-      ["provider: mock", "baseDirectory: ec", "providers: {}", ""].join("\n")
+      path.join(root, ".ec", "config", "project.yaml"),
+      ["provider: mock", "providers: {}", ""].join("\n")
     );
 
-    const featureStructure = new FeatureStructureService(root);
+    const featureStructure = createFeatureStructure(root);
     await featureStructure.createWorkspace({
       slug: "feature-auth-refresh",
       title: "Auth Refresh",
@@ -43,7 +49,7 @@ describe("resolveStageRequest", () => {
     tempDirs.push(root);
     process.chdir(root);
 
-    const featureStructure = new FeatureStructureService(root);
+    const featureStructure = createFeatureStructure(root);
     await featureStructure.createWorkspace({
       slug: "feature-auth-refresh",
       title: "Auth Refresh",

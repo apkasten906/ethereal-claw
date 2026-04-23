@@ -12,4 +12,4 @@ coverage/
 .vscode/
 
 # Generated artifact placeholders stay in git, but nested runtime junk does not.
-ec/**/.DS_Store
+.ec/**/.DS_Store

@@ -1,4 +1,30 @@
-# Ethereal-CLAW CLI — Base Repo Blueprint - v4
+# Ethereal-CLAW CLI — Base Repo Blueprint
+
+**Version:** 0.2.0
+**Status:** Milestone 2 — In Progress
+**Last Updated:** 2026-04-23
+
+---
+
+## Version Notes
+
+### 0.2.0
+
+* Introduced `.ec` workspace model for host repositories
+* Separated tool repo vs host repo architecture
+* Added `bdd` and `review-consistency` as first-class workflow stages (Milestone 2)
+* Defined artifact design principle (human vs agent readability)
+* Added artifact synchronization rules
+* Introduced traceability map as core artifact
+
+### 0.1.0
+
+* Initial CLI scaffold
+* `init`, `ideate`, `plan` commands
+* Mock provider and budget manager
+* Basic artifact generation and run logging
+
+---
 
 ## Purpose
 
@@ -132,6 +158,12 @@ User
 
 ## Repo Structure
 
+There are **two distinct structures** to think about:
+
+### 1. Ethereal-CLAW source repository
+
+This is the repository where Ethereal-CLAW itself is developed.
+
 ```text
 ethereal-claw/
 ├─ package.json
@@ -143,99 +175,75 @@ ethereal-claw/
 │  ├─ workflow.md
 │  ├─ command-reference.md
 │  └─ prompts/
-│     ├─ ideation.md
-│     ├─ planner.md
-│     ├─ story-writer.md
-│     ├─ reviewer.md
-│     ├─ implementer.md
-│     └─ tester.md
 ├─ config/
 │  ├─ ethereal-claw.config.example.yaml
 │  └─ agent-policies.yaml
-├─ ec/
-│  ├─ features/
-│  ├─ runs/
-│  ├─ cache/        (future)
-│  └─ temp/         (future)
 ├─ packages/
 │  ├─ cli/
-│  │  ├─ package.json
-│  │  ├─ tsconfig.json
-│  │  └─ src/
-│  │     ├─ index.ts
-│  │     ├─ commands/
-│  │     │  ├─ init-command.ts
-│  │     │  ├─ ideate-command.ts
-│  │     │  ├─ plan-command.ts
-│  │     │  ├─ implement-command.ts
-│  │     │  ├─ test-command.ts
-│  │     │  ├─ review-command.ts
-│  │     │  └─ run-command.ts
-│  │     └─ presentation/
-│  │        └─ console-output.ts
 │  ├─ core/
-│  │  ├─ package.json
-│  │  ├─ tsconfig.json
-│  │  └─ src/
-│  │     ├─ orchestration/
-│  │     │  ├─ workflow-orchestrator.ts
-│  │     │  ├─ workflow-step.ts
-│  │     │  ├─ workflow-context.ts
-│  │     │  └─ run-result.ts
-│  │     ├─ agents/
-│  │     │  ├─ base-agent.ts
-│  │     │  ├─ planner-agent.ts
-│  │     │  ├─ reviewer-agent.ts
-│  │     │  ├─ story-agent.ts
-│  │     │  ├─ implementer-agent.ts
-│  │     │  ├─ tester-agent.ts
-│  │     │  └─ agent-registry.ts
-│  │     ├─ artifacts/
-│  │     │  ├─ artifact-service.ts
-│  │     │  ├─ feature-structure-service.ts
-│  │     │  └─ templates/
-│  │     ├─ providers/
-│  │     │  ├─ llm-provider.ts
-│  │     │  ├─ openai-provider.ts
-│  │     │  ├─ github-model-provider.ts
-│  │     │  └─ mock-provider.ts
-│  │     ├─ config/
-│  │     │  ├─ load-config.ts
-│  │     │  └─ config-schema.ts
-│  │     ├─ git/
-│  │     │  └─ git-service.ts
-│  │     ├─ logging/
-│  │     │  └─ logger.ts
-│  │     └─ utils/
-│  │        ├─ file-system.ts
-│  │        └─ timestamps.ts
 │  └─ shared/
-│     ├─ package.json
-│     ├─ tsconfig.json
-│     └─ src/
-│        ├─ types/
-│        │  ├─ feature.ts
-│        │  ├─ story.ts
-│        │  ├─ acceptance-criteria.ts
-│        │  ├─ run.ts
-│        │  └─ agent.ts
-│        └─ constants/
-│           └─ workflow-stages.ts
 └─ tests/
    ├─ unit/
    └─ fixtures/
 ```
 
-````
+### 2. Host solution repository
 
----
+This is the repository where a user runs Ethereal-CLAW against their actual solution.
+
+```text
+host-solution/
+├─ src/
+├─ tests/
+├─ docs/
+├─ package.json
+├─ .gitignore
+└─ .ec/
+   ├─ config/         ← project-local, human-authored Ethereal config
+   │  ├─ project.yaml
+   │  └─ agent-policies.yaml
+   ├─ features/       ← generated feature workspaces
+   ├─ runs/           ← generated run logs
+   ├─ cache/          ← future
+   └─ temp/           ← future
+```
+
+### Design decision
+
+> Ethereal-CLAW should be **separate from the host solution** and removable like scaffolding.
+
+That means:
+
+* the **tool code** lives in the Ethereal-CLAW repo or is installed as a package
+* the **host repo** should only contain a small project-local Ethereal workspace
+* that workspace should live in **`.ec/`** so it is clearly separate from the solution itself
+
+### Human vs machine separation inside `.ec/`
+
+This does **not** conflict with the need to separate human-authored and generated content.
+
+Within `.ec/`:
+
+* `.ec/config/` = human-authored project-local configuration
+* `.ec/features/`, `.ec/runs/`, `.ec/cache/`, `.ec/temp/` = agent-managed runtime state
+
+So the separation becomes:
+
+| Concern                       | Location                     |
+| ----------------------------- | ---------------------------- |
+| Tool source code              | `ethereal-claw` repo         |
+| Host solution code            | normal host repo folders     |
+| Project-local Ethereal config | `.ec/config/`                |
+| Generated Ethereal artifacts  | `.ec/features/`, `.ec/runs/` |
+
+This is the cleanest model if Ethereal-CLAW is meant to be used across many host repositories.
 
 ## Feature Artifact Structure
 
-All artifacts live under `/ec`.
+All project-local Ethereal artifacts live under `/.ec` inside the host solution repository.
 
 ```text
-ec/
+.ec/
 └─ features/
    └─ feature-auth-refresh/
       ├─ feature.yaml
@@ -261,7 +269,34 @@ ec/
       └─ run-history/
          ├─ run-2026-04-17T090000Z.json
          └─ run-2026-04-17T093000Z.json
-````
+```
+
+---
+
+## Workspace Principle — Scaffolding, Not Structure
+
+Ethereal-CLAW should behave like **scaffolding around a building**.
+
+That means:
+
+* it helps create, inspect, and manage development state
+* it should remain clearly separate from the actual application structure
+* it should be removable without reshaping the host solution
+
+For that reason, the preferred project-local workspace is:
+
+```text
+.ec/
+```
+
+not root-level `features/`, `runs/`, or other scattered folders.
+
+This gives the host repository:
+
+* less visual clutter
+* clearer ownership boundaries
+* easier cleanup and `.gitignore` rules
+* a better mental model for users
 
 ---
 
@@ -299,6 +334,46 @@ This ensures:
 * agents can operate deterministically
 * humans can review and correct output
 * state transitions are reliable
+
+---
+
+## Artifact Synchronization Rule
+
+To maintain system integrity, artifacts must remain synchronized across representations.
+
+### Source of Truth Principle
+
+Each artifact type must define a **single source of truth**:
+
+| Artifact     | Source of Truth | Derived Representation |
+| ------------ | --------------- | ---------------------- |
+| Stories      | Structured type | Markdown               |
+| AC           | Structured type | Markdown               |
+| BDD          | `.feature` file | Parsed model           |
+| Traceability | JSON            | Optional summary       |
+
+### Rules
+
+* Derived representations must be reproducible from the source of truth
+* Agents must operate only on source-of-truth structures
+* Human edits must be validated against the source of truth
+* Divergence between representations must be detected and surfaced
+
+### Enforcement
+
+* Synchronization validation occurs during `review-consistency`
+* Critical mismatches should block workflow progression
+* The system must not silently overwrite conflicting data
+
+### Goal
+
+> Ensure that human-readable artifacts and agent-readable structures never drift apart.
+
+This enables:
+
+* reliable automation
+* trustworthy reviews
+* consistent state transitions
 
 ---
 
@@ -709,18 +784,6 @@ routing:
     - stage: implement
       condition: security_or_auth_change
       upgradeTo: high
-providers:
-  modelTiers:
-    low:
-      provider: openai
-      model: gpt-mini
-    medium:
-      provider: openai
-      model: gpt-5.4
-    high:
-      provider: githubModels
-      model: gpt-4.1
-
 
 defaultProvider: mock
 providers:
@@ -734,9 +797,11 @@ providers:
     enabled: true
 logging:
   level: info
-artifacts:
-  featuresDirectory: ./features
-  runsDirectory: ./runs
+workspace:
+  rootDirectory: ./.ec
+  configDirectory: ./.ec/config
+  featuresDirectory: ./.ec/features
+  runsDirectory: ./.ec/runs
 workflow:
   stopOnFailure: true
   requireHumanApprovalAfter:

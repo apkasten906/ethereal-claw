@@ -6,6 +6,7 @@ export * from "./budget/token-estimator.js";
 export * from "./budget/token-usage-monitor.js";
 export * from "./config/config-schema.js";
 export * from "./config/load-config.js";
+export * from "./config/workspace-paths.js";
 export * from "./git/git-service.js";
 export * from "./orchestration/run-result.js";
 export * from "./orchestration/workflow-context.js";

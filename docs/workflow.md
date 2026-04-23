@@ -14,7 +14,7 @@ For exact syntax and options, see the [command reference](command-reference.md).
 | Test | `ethereal test <feature-slug>` | Existing feature workspace | `tests/test-plan.md`, `tests/generated-tests.md` | [Tester](prompts/tester.md) |
 | Review | `ethereal review <feature-slug>` | Existing feature workspace | `review/consistency-review.md`, `review/code-review.md` | [Reviewer](prompts/reviewer.md) |
 
-Each stage writes artifacts into a feature workspace and appends a run log entry under both `ec/runs/` and `ec/features/<feature-slug>/run-history/` by default.
+Each stage writes artifacts into a feature workspace and appends a run log entry under both `.ec/runs/` and `.ec/features/<feature-slug>/run-history/` by default.
 
 ## Ideate
 
