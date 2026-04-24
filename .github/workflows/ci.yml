@@ -110,7 +110,7 @@ jobs:
             | xargs -r file --mime-type \
             | grep -v 'text/' \
             | grep -v 'inode/x-empty' \
-            | cut -d: -f1)
+            | cut -d: -f1 || true)
           if [ -n "$BINARIES" ]; then
             echo "Binary files added under docs/:"
             echo "$BINARIES"

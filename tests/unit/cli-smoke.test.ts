@@ -75,6 +75,36 @@ describe("CLI smoke", () => {
     expect(after).toBe(before);
   });
 
+  it("keeps agent policies next to project.yaml when workspace directories are overridden", async () => {
+    const root = await createTempWorkspace();
+
+    await mkdir(path.join(root, ".ec", "config"), { recursive: true });
+    await writeFile(
+      path.join(root, ".ec", "config", "project.yaml"),
+      [
+        "provider: mock",
+        "workspace:",
+        "  rootDirectory: ./artifacts",
+        "  configDirectory: ./artifacts/config",
+        "  featuresDirectory: ./artifacts/features",
+        "  runsDirectory: ./artifacts/runs",
+        "budget:",
+        "  runBudgetUsd: 5",
+        "  warnAtPercent: 50",
+        "  confirmAtPercent: 75",
+        "  stopAtPercent: 90",
+        "  hardCapPercent: 100",
+        "providers: {}",
+        ""
+      ].join("\n")
+    );
+
+    await runCli(root, ["init"]);
+
+    await expect(access(path.join(root, ".ec", "config", "agent-policies.yaml"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "artifacts", "config", "agent-policies.yaml"))).rejects.toThrow();
+  });
+
   it("ideate writes feature artifacts and a run log with budget data", async () => {
     const root = await createTempWorkspace();
     await mkdir(path.join(root, ".ec", "config"), { recursive: true });

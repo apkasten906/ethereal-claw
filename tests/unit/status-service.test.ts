@@ -14,19 +14,19 @@ afterEach(async () => {
   tempDirs.length = 0;
 });
 
+async function createServices() {
+  const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-status-"));
+  tempDirs.push(root);
+  const workspacePaths = resolveWorkspacePaths(root, clawConfigSchema.parse({}).workspace);
+
+  return {
+    root,
+    featureStructure: new FeatureStructureService(workspacePaths),
+    status: new StatusService(workspacePaths)
+  };
+}
+
 describe("StatusService", () => {
-  async function createServices() {
-    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-status-"));
-    tempDirs.push(root);
-    const workspacePaths = resolveWorkspacePaths(root, clawConfigSchema.parse({}).workspace);
-
-    return {
-      root,
-      featureStructure: new FeatureStructureService(workspacePaths),
-      status: new StatusService(workspacePaths)
-    };
-  }
-
   it("lists known features with their latest run stage", async () => {
     const { root, featureStructure, status } = await createServices();
     await featureStructure.createWorkspace({
@@ -92,6 +92,25 @@ describe("StatusService", () => {
     expect(formatFeatureStatus(inspected!)).toContain("Feature: Auth Refresh");
     expect(formatFeatureStatus(inspected!)).toContain("Available artifacts:\n- none");
     expect(formatFeatureStatus(inspected!)).toContain("Next: ec plan feature-auth-refresh");
+  });
+
+  it("surfaces malformed feature metadata during feature listing", async () => {
+    const { root, status } = await createServices();
+    await mkdir(path.join(root, ".ec", "features", "feature-auth-refresh"), { recursive: true });
+    await writeFile(
+      path.join(root, ".ec", "features", "feature-auth-refresh", "feature.yaml"),
+      [
+        "slug: feature-auth-refresh",
+        "title: Auth Refresh",
+        "request: refresh tokens",
+        "status: shipped",
+        "createdAt: '2026-04-17T00:00:00.000Z'",
+        "updatedAt: '2026-04-17T00:00:00.000Z'",
+        ""
+      ].join("\n")
+    );
+
+    await expect(status.listFeatures()).rejects.toThrow("Invalid feature metadata");
   });
 });
 

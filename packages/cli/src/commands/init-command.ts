@@ -17,13 +17,14 @@ export function createInitCommand(): Command {
     .description("Create baseline local configuration.")
     .action(async () => {
       const target = path.join(process.cwd(), ".ec", "config", "project.yaml");
+      const configHome = path.dirname(target);
       const config = existsSync(target) ? await loadConfig(target) : clawConfigSchema.parse({});
       const workspacePaths = resolveWorkspacePaths(process.cwd(), config.workspace);
-      const policiesTarget = path.join(workspacePaths.configDirectory, "agent-policies.yaml");
+      const policiesTarget = path.join(configHome, "agent-policies.yaml");
       const artifacts = new ArtifactService(workspacePaths);
       await artifacts.ensureRuntimeDirectories();
 
-      await mkdir(workspacePaths.configDirectory, { recursive: true });
+      await mkdir(configHome, { recursive: true });
       const source = bundledConfigExamplePath;
 
       try {

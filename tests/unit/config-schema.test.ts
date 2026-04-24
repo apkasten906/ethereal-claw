@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { clawConfigSchema } from "../../packages/core/src/config/config-schema.js";
+import { resolveWorkspacePaths } from "../../packages/core/src/config/workspace-paths.js";
 
 describe("clawConfigSchema", () => {
   it("defaults the budget block when it is omitted", () => {
@@ -36,6 +37,28 @@ describe("clawConfigSchema", () => {
       featuresDirectory: "./artifacts/features",
       runsDirectory: "./artifacts/runs"
     });
+  });
+
+  it("keeps remaining workspace paths project-root relative on partial overrides", () => {
+    const parsed = clawConfigSchema.parse({
+      provider: "mock",
+      workspace: {
+        rootDirectory: "./artifacts"
+      }
+    });
+
+    expect(parsed.workspace).toEqual({
+      rootDirectory: "./artifacts",
+      configDirectory: "./.ec/config",
+      featuresDirectory: "./.ec/features",
+      runsDirectory: "./.ec/runs"
+    });
+
+    const paths = resolveWorkspacePaths("/repo", parsed.workspace);
+    expect(paths.rootDirectory).toMatch(/[\\/]repo[\\/]artifacts$/);
+    expect(paths.configDirectory).toMatch(/[\\/]repo[\\/]\.ec[\\/]config$/);
+    expect(paths.featuresDirectory).toMatch(/[\\/]repo[\\/]\.ec[\\/]features$/);
+    expect(paths.runsDirectory).toMatch(/[\\/]repo[\\/]\.ec[\\/]runs$/);
   });
 
   it("creates fresh default objects for each parse", () => {

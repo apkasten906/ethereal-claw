@@ -92,8 +92,16 @@ export class StatusService {
             lastRun,
             nextCommand: this.nextCommand(feature, currentStage, lastRun)
           };
-        } catch {
-          return null;
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+            return null;
+          }
+
+          if (error instanceof Error && error.message.startsWith("Invalid feature metadata")) {
+            throw error;
+          }
+
+          throw error;
         }
       })
     );
@@ -137,7 +145,7 @@ export class StatusService {
         throw error;
       }
 
-      return null;
+      throw error;
     }
   }
 

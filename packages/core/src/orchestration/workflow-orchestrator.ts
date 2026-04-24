@@ -273,7 +273,7 @@ export class WorkflowOrchestrator {
   }
 
   private wrapGherkin(title: string): string {
-    const safeTitle = title.replace(/[\r\n]+/g, " ").trim();
+    const safeTitle = title.replaceAll(/[\r\n]+/g, " ").trim();
     return [
       `Feature: ${safeTitle}`,
       "",

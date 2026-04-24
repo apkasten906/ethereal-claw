@@ -12,16 +12,18 @@ export interface WorkspacePaths {
 }
 
 export function resolveWorkspacePaths(
-  rootDir = process.cwd(),
+  rootDir: string | undefined,
   workspace: ClawConfig["workspace"]
 ): WorkspacePaths {
-  const rootDirectory = resolveWithin(rootDir, workspace.rootDirectory);
+  const resolvedRootDir = rootDir ?? process.cwd();
+  const rootDirectory = resolveWithin(resolvedRootDir, workspace.rootDirectory);
 
+  // Workspace config paths are project-root relative for explicit, predictable placement.
   return {
     rootDirectory,
-    configDirectory: resolveWithin(rootDir, workspace.configDirectory),
-    featuresDirectory: resolveWithin(rootDir, workspace.featuresDirectory),
-    runsDirectory: resolveWithin(rootDir, workspace.runsDirectory),
+    configDirectory: resolveWithin(resolvedRootDir, workspace.configDirectory),
+    featuresDirectory: resolveWithin(resolvedRootDir, workspace.featuresDirectory),
+    runsDirectory: resolveWithin(resolvedRootDir, workspace.runsDirectory),
     cacheDirectory: path.join(rootDirectory, "cache"),
     tempDirectory: path.join(rootDirectory, "temp")
   };
