@@ -106,8 +106,8 @@ jobs:
 
       - name: Fail on binary files added under docs/
         run: |
-          BINARIES=$(git diff --name-only --diff-filter=A origin/${{ github.base_ref }}...HEAD -- 'docs/**' \
-            | xargs -r file --mime-type \
+          BINARIES=$(git diff --name-only -z --diff-filter=A origin/${{ github.base_ref }}...HEAD -- 'docs/**' \
+            | xargs -0 -r file --mime-type \
             | grep -v 'text/' \
             | grep -v 'inode/x-empty' \
             | cut -d: -f1 || true)

@@ -1,5 +1,10 @@
 # Introduce unified artifact root directory (/ec)
 
+## Status
+This story is retained as historical design context, but it is superseded by
+[23-ec-workspace-migration.md](./23-ec-workspace-migration.md), which standardizes on
+`/.ec/` rather than `/ec/`.
+
 ## Description
 Currently, Ethereal-CLAW writes generated artifacts to `/features` and `/runs` at the repository root.
 
