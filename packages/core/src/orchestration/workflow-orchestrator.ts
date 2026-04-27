@@ -8,6 +8,7 @@ import { ArtifactService } from "../artifacts/artifact-service.js";
 import { FeatureStructureService } from "../artifacts/feature-structure-service.js";
 import type { AgentResult } from "../agents/base-agent.js";
 import type { ClawConfig } from "../config/config-schema.js";
+import { resolveWorkspacePaths } from "../config/workspace-paths.js";
 import { GitService } from "../git/git-service.js";
 import { createLogger } from "../logging/logger.js";
 import type { LlmProvider } from "../providers/llm-provider.js";
@@ -37,8 +38,9 @@ export class WorkflowOrchestrator {
     readonly rootDir = process.cwd()
   ) {
     this.budget = new BudgetManager(config.budget);
-    this.artifacts = new ArtifactService(this.rootDir);
-    this.featureStructure = new FeatureStructureService(this.rootDir);
+    const workspacePaths = resolveWorkspacePaths(this.rootDir, config.workspace);
+    this.artifacts = new ArtifactService(workspacePaths);
+    this.featureStructure = new FeatureStructureService(workspacePaths);
     this.agents = createAgents(provider);
   }
 
@@ -271,7 +273,7 @@ export class WorkflowOrchestrator {
   }
 
   private wrapGherkin(title: string): string {
-    const safeTitle = title.replace(/[\r\n]+/g, " ").trim();
+    const safeTitle = title.replaceAll(/[\r\n]+/g, " ").trim();
     return [
       `Feature: ${safeTitle}`,
       "",

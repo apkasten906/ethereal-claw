@@ -1,34 +1,38 @@
-import path from "node:path";
 import type { RunLog } from "@ethereal-claw/shared";
+import type { WorkspacePaths } from "../config/workspace-paths.js";
 import { assertFeatureSlug, ensureDir, resolveWithin, writeFileEnsured } from "../utils/file-system.js";
 
 const runIdPattern = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/;
 
 export class ArtifactService {
-  constructor(private readonly rootDir = process.cwd()) {}
+  constructor(private readonly workspacePaths: WorkspacePaths) {}
 
   async writeFeatureArtifact(featureSlug: string, relativePath: string, content: string): Promise<void> {
     const safeFeatureSlug = assertFeatureSlug(featureSlug);
-    const featureRoot = resolveWithin(this.rootDir, "features", safeFeatureSlug);
+    const featureRoot = resolveWithin(this.workspacePaths.featuresDirectory, safeFeatureSlug);
     const targetPath = resolveWithin(featureRoot, relativePath);
     await writeFileEnsured(targetPath, content);
   }
 
   async ensureRuntimeDirectories(): Promise<void> {
     await Promise.all([
-      ensureDir(path.join(this.rootDir, "features")),
-      ensureDir(path.join(this.rootDir, "runs"))
+      ensureDir(this.workspacePaths.rootDirectory),
+      ensureDir(this.workspacePaths.configDirectory),
+      ensureDir(this.workspacePaths.featuresDirectory),
+      ensureDir(this.workspacePaths.runsDirectory),
+      ensureDir(this.workspacePaths.cacheDirectory),
+      ensureDir(this.workspacePaths.tempDirectory)
     ]);
   }
 
   async writeRunLog(run: RunLog): Promise<void> {
     const safeRunId = this.assertRunId(run.id);
-    const runsDir = resolveWithin(this.rootDir, "runs");
+    const runsDir = this.workspacePaths.runsDirectory;
     const targetPath = resolveWithin(runsDir, `${safeRunId}.json`);
     const safeFeatureSlug = assertFeatureSlug(run.featureSlug);
     await writeFileEnsured(targetPath, `${JSON.stringify(run, null, 2)}\n`);
     await writeFileEnsured(
-      resolveWithin(this.rootDir, "features", safeFeatureSlug, "run-history", `${safeRunId}.json`),
+      resolveWithin(this.workspacePaths.featuresDirectory, safeFeatureSlug, "run-history", `${safeRunId}.json`),
       `${JSON.stringify(run, null, 2)}\n`
     );
   }

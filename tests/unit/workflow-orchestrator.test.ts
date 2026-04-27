@@ -22,7 +22,13 @@ function createConfig() {
       stopAtPercent: 90,
       hardCapPercent: 100
     },
-    providers: {}
+    providers: {},
+    workspace: {
+      rootDirectory: "./.ec",
+      configDirectory: "./.ec/config",
+      featuresDirectory: "./.ec/features",
+      runsDirectory: "./.ec/runs"
+    }
   };
 }
 
@@ -49,7 +55,7 @@ describe("WorkflowOrchestrator", () => {
     expect(results[3]?.run.executions).toHaveLength(1);
     expect(results[3]?.run.executions[0]?.agent).toBe("reviewer");
 
-    const runFiles = await readdir(path.join(root, "runs"));
+    const runFiles = await readdir(path.join(root, ".ec", "runs"));
     expect(runFiles).toHaveLength(5);
   });
 
@@ -65,7 +71,7 @@ describe("WorkflowOrchestrator", () => {
       dryRun: true
     });
 
-    const featurePath = path.join(root, "features", "feature-auth-refresh", "feature.yaml");
+    const featurePath = path.join(root, ".ec", "features", "feature-auth-refresh", "feature.yaml");
     const beforeRun = await readFile(featurePath, "utf8");
 
     const results = await orchestrator.run({
@@ -87,8 +93,8 @@ describe("WorkflowOrchestrator", () => {
     const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
     await orchestrator.init();
 
-    await expect(access(path.join(root, "features"))).resolves.toBeUndefined();
-    await expect(access(path.join(root, "runs"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, ".ec", "features"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, ".ec", "runs"))).resolves.toBeUndefined();
   });
 
   it("uses a consistent default feature slug across stages", async () => {
@@ -147,7 +153,7 @@ describe("WorkflowOrchestrator", () => {
 
     expect(Date.parse(result.run.startedAt)).toBeLessThanOrEqual(Date.parse(result.run.completedAt));
 
-    const runLogRaw = await readFile(path.join(root, "runs", `${result.run.id}.json`), "utf8");
+    const runLogRaw = await readFile(path.join(root, ".ec", "runs", `${result.run.id}.json`), "utf8");
     const runLog = JSON.parse(runLogRaw) as { startedAt: string; completedAt: string };
     expect(runLog.startedAt).toBe(result.run.startedAt);
     expect(runLog.completedAt).toBe(result.run.completedAt);
@@ -227,7 +233,7 @@ describe("WorkflowOrchestrator", () => {
     });
 
     const bddContent = await readFile(
-      path.join(root, "features", "feature-multiline-title", "bdd", "001-initial.feature"),
+      path.join(root, ".ec", "features", "feature-multiline-title", "bdd", "001-initial.feature"),
       "utf8"
     );
 
@@ -248,7 +254,8 @@ describe("WorkflowOrchestrator", () => {
         stopAtPercent: 75,
         hardCapPercent: 100
       },
-      providers: {}
+      providers: {},
+      workspace: { rootDirectory: "./.ec", configDirectory: "./.ec/config", featuresDirectory: "./.ec/features", runsDirectory: "./.ec/runs" }
     };
 
     const orchestrator = new WorkflowOrchestrator(new MockProvider(), tinyBudgetConfig, root);
@@ -261,11 +268,11 @@ describe("WorkflowOrchestrator", () => {
       })
     ).rejects.toThrow(/Budget (stop|hard-stop):/);
 
-    const runFiles = await readdir(path.join(root, "runs"));
+    const runFiles = await readdir(path.join(root, ".ec", "runs"));
     expect(runFiles).toHaveLength(1);
 
     const runLog = JSON.parse(
-      await readFile(path.join(root, "runs", runFiles[0] ?? ""), "utf8")
+      await readFile(path.join(root, ".ec", "runs", runFiles[0] ?? ""), "utf8")
     ) as { success: boolean; notes: string[] };
 
     expect(runLog.success).toBe(false);

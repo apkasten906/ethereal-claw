@@ -1,0 +1,54 @@
+budget:
+  enabled: true
+  sessionTokenLimit: 400000
+  defaultRunTokenLimit: 50000
+  warningThresholds:
+    - 0.5
+    - 0.75
+    - 0.9
+  autoDowngrade: true
+  stopAtHardLimit: true
+  requireApprovalAtPercent: 0.75
+routing:
+  defaultTierByStage:
+    ideate: low
+    plan: low
+    bdd: low
+    review-consistency: low
+    implement: medium
+    test: low
+    review: medium
+  escalationRules:
+    - stage: ideate
+      condition: ambiguous_requirements
+      upgradeTo: medium
+    - stage: plan
+      condition: multi_module_change
+      upgradeTo: medium
+    - stage: implement
+      condition: security_or_auth_change
+      upgradeTo: high
+
+defaultProvider: mock
+providers:
+  openai:
+    apiKeyEnvVar: OPENAI_API_KEY
+    model: gpt-5.4
+  githubModels:
+    apiKeyEnvVar: GITHUB_TOKEN
+    model: gpt-4.1
+  mock:
+    enabled: true
+logging:
+  level: info
+workspace:
+  rootDirectory: ./.ec
+  configDirectory: ./.ec/config
+  featuresDirectory: ./.ec/features
+  runsDirectory: ./.ec/runs
+workflow:
+  stopOnFailure: true
+  requireHumanApprovalAfter:
+    - ideate
+    - review-consistency
+    - review

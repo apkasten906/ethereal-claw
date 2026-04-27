@@ -14,7 +14,9 @@ For exact syntax and options, see the [command reference](command-reference.md).
 | Test | `ethereal test <feature-slug>` | Existing feature workspace | `tests/test-plan.md`, `tests/generated-tests.md` | [Tester](prompts/tester.md) |
 | Review | `ethereal review <feature-slug>` | Existing feature workspace | `review/consistency-review.md`, `review/code-review.md` | [Reviewer](prompts/reviewer.md) |
 
-Each stage writes artifacts into a feature workspace and appends a run log entry under both `runs/` and `features/<feature-slug>/run-history/`.
+Each stage writes artifacts into a feature workspace and appends a run log entry under both `.ec/runs/` and `.ec/features/<feature-slug>/run-history/` by default.
+
+Use `ethereal status` or `ec status` to list known feature workspaces and their next recommended commands. Use `ec status <feature-slug>` for a feature-specific view of current stage, available artifacts, missing artifacts, latest run result, and token usage. Status reads local workspace files only and does not call an LLM provider.
 
 ## Ideate
 

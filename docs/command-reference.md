@@ -17,16 +17,16 @@ Related docs:
 
 The stage commands (`ideate`, `plan`, `implement`, `test`, `review`, and `run`) print JSON to stdout. Core logs are written to stderr so JSON output remains script-friendly.
 
-`init` prints human-readable status messages to stdout because it is a setup command rather than a workflow stage.
+`init` and `status` print human-readable status messages to stdout because they are setup and orientation commands rather than workflow stages.
 
 Every stage writes a run log to both:
 
-- `runs/<run-id>.json`
-- `features/<feature-slug>/run-history/<run-id>.json`
+- `.ec/runs/<run-id>.json`
+- `.ec/features/<feature-slug>/run-history/<run-id>.json`
 
 `--dry-run` marks the run log as a dry run. In the current scaffold, stages still write their planned artifacts; the flag records intent and makes dry-run executions easy to identify in logs.
 
-Commands after `ideate` require an existing feature workspace. The `--request` option only overrides the saved request text; it does not create a missing `features/<feature-slug>/feature.yaml`.
+Commands after `ideate` require an existing feature workspace. The `--request` option only overrides the saved request text; it does not create a missing `.ec/features/<feature-slug>/feature.yaml`.
 
 ## `ethereal init`
 
@@ -41,11 +41,15 @@ ec init
 
 Creates or ensures:
 
-- `features/`
-- `runs/`
-- `config/ethereal-claw.config.yaml`
+- `.ec/config/`
+- `.ec/features/`
+- `.ec/runs/`
+- `.ec/cache/`
+- `.ec/temp/`
+- `.ec/config/project.yaml`
+- `.ec/config/agent-policies.yaml`
 
-If `config/ethereal-claw.config.yaml` already exists, the command leaves it unchanged.
+If `.ec/config/project.yaml` already exists, the command leaves it unchanged.
 
 Related docs:
 
@@ -68,11 +72,11 @@ Options:
 
 Writes:
 
-- `features/<feature-slug>/feature.yaml`
-- `features/<feature-slug>/ideation.md`
-- `features/<feature-slug>/stories/001-initial-story.md`
-- `features/<feature-slug>/bdd/001-initial.feature`
-- run logs under `runs/` and `features/<feature-slug>/run-history/`
+- `.ec/features/<feature-slug>/feature.yaml`
+- `.ec/features/<feature-slug>/ideation.md`
+- `.ec/features/<feature-slug>/stories/001-initial-story.md`
+- `.ec/features/<feature-slug>/bdd/001-initial.feature`
+- run logs under `.ec/runs/` and `.ec/features/<feature-slug>/run-history/`
 
 The feature slug is generated from the request with a `feature-` prefix unless the core API is called directly with an explicit slug.
 
@@ -100,14 +104,14 @@ Options:
 
 Preconditions:
 
-- `features/<feature-slug>/feature.yaml` must exist.
+- `.ec/features/<feature-slug>/feature.yaml` must exist.
 - If `--request` is omitted, `feature.yaml` must contain a non-empty `request`.
 
 Writes:
 
-- `features/<feature-slug>/plan.md`
-- `features/<feature-slug>/implementation/tasks.md`
-- run logs under `runs/` and `features/<feature-slug>/run-history/`
+- `.ec/features/<feature-slug>/plan.md`
+- `.ec/features/<feature-slug>/implementation/tasks.md`
+- run logs under `.ec/runs/` and `.ec/features/<feature-slug>/run-history/`
 
 Related docs:
 
@@ -132,12 +136,12 @@ Options:
 
 Preconditions:
 
-- `features/<feature-slug>/feature.yaml` must exist.
+- `.ec/features/<feature-slug>/feature.yaml` must exist.
 
 Writes:
 
-- `features/<feature-slug>/implementation/change-summary.md`
-- run logs under `runs/` and `features/<feature-slug>/run-history/`
+- `.ec/features/<feature-slug>/implementation/change-summary.md`
+- run logs under `.ec/runs/` and `.ec/features/<feature-slug>/run-history/`
 
 This command currently produces an implementation plan. It does not edit application source files.
 
@@ -164,13 +168,13 @@ Options:
 
 Preconditions:
 
-- `features/<feature-slug>/feature.yaml` must exist.
+- `.ec/features/<feature-slug>/feature.yaml` must exist.
 
 Writes:
 
-- `features/<feature-slug>/tests/test-plan.md`
-- `features/<feature-slug>/tests/generated-tests.md`
-- run logs under `runs/` and `features/<feature-slug>/run-history/`
+- `.ec/features/<feature-slug>/tests/test-plan.md`
+- `.ec/features/<feature-slug>/tests/generated-tests.md`
+- run logs under `.ec/runs/` and `.ec/features/<feature-slug>/run-history/`
 
 This command generates test guidance. It does not run `npm run test`; use the npm script for the project test suite.
 
@@ -197,13 +201,13 @@ Options:
 
 Preconditions:
 
-- `features/<feature-slug>/feature.yaml` must exist.
+- `.ec/features/<feature-slug>/feature.yaml` must exist.
 
 Writes:
 
-- `features/<feature-slug>/review/consistency-review.md`
-- `features/<feature-slug>/review/code-review.md`
-- run logs under `runs/` and `features/<feature-slug>/run-history/`
+- `.ec/features/<feature-slug>/review/consistency-review.md`
+- `.ec/features/<feature-slug>/review/code-review.md`
+- run logs under `.ec/runs/` and `.ec/features/<feature-slug>/run-history/`
 
 This command creates local review artifacts. It does not submit a GitHub pull request review.
 
@@ -211,6 +215,38 @@ Related docs:
 
 - [Workflow: Review](workflow.md#review)
 - [Reviewer prompt](prompts/reviewer.md)
+
+## `ethereal status [feature-slug]`
+
+Show workflow visibility without running a model-backed stage.
+
+Syntax:
+
+```bash
+ethereal status
+ec status
+ethereal status feature-auth-refresh
+ec status feature-auth-refresh
+```
+
+Global status lists known feature workspaces, their current stage, the latest run result, and the next recommended command.
+
+Feature status shows:
+
+- feature title and slug
+- current stage
+- available artifacts
+- missing expected artifacts for the current stage
+- last run result and timestamp
+- token usage summary from the last run
+- next recommended command
+
+If the feature does not exist, the command reports that cleanly and suggests `ec status` to list known features.
+
+Related docs:
+
+- [Workflow](workflow.md)
+- [Architecture](architecture.md)
 
 ## `ethereal run <feature-slug>`
 
@@ -230,7 +266,7 @@ Options:
 
 Preconditions:
 
-- `features/<feature-slug>/feature.yaml` must exist.
+- `.ec/features/<feature-slug>/feature.yaml` must exist.
 - Run `ideate` first for new feature requests.
 
 Runs, in order:
@@ -248,7 +284,7 @@ Related docs:
 
 ## Artifact Map
 
-Feature workspaces are stored under `features/<feature-slug>/`.
+Feature workspaces are stored under `.ec/features/<feature-slug>/` by default. Set `workspace` in `.ec/config/project.yaml` to use different workspace paths.
 
 | Artifact | Created by | Purpose |
 | --- | --- | --- |
@@ -264,4 +300,5 @@ Feature workspaces are stored under `features/<feature-slug>/`.
 | `review/consistency-review.md` | `review` | Traceability and consistency review. |
 | `review/code-review.md` | `review` | Human review gate placeholder. |
 | `run-history/<run-id>.json` | all stages | Per-feature run log copy. |
-| `runs/<run-id>.json` | all stages | Global run log copy. |
+| `.ec/runs/<run-id>.json` | all stages | Global run log copy. |
+

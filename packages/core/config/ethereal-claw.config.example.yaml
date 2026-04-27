@@ -1,4 +1,9 @@
 provider: mock
+workspace:
+  rootDirectory: ./.ec
+  configDirectory: ./.ec/config
+  featuresDirectory: ./.ec/features
+  runsDirectory: ./.ec/runs
 budget:
   runBudgetUsd: 5
   warnAtPercent: 50

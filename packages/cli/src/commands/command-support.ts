@@ -1,14 +1,17 @@
-import { FeatureStructureService, GitHubModelProvider, loadConfig, MockProvider, OpenAiProvider, WorkflowOrchestrator } from "@ethereal-claw/core";
+import path from "node:path";
+import { FeatureStructureService, GitHubModelProvider, loadConfig, MockProvider, OpenAiProvider, resolveWorkspacePaths, WorkflowOrchestrator } from "@ethereal-claw/core";
 
 export async function createOrchestrator(): Promise<WorkflowOrchestrator> {
   const config = await loadConfig();
 
-  const provider =
-    config.provider === "openai"
-      ? new OpenAiProvider()
-      : config.provider === "github"
-        ? new GitHubModelProvider()
-        : new MockProvider();
+  let provider: OpenAiProvider | GitHubModelProvider | MockProvider;
+  if (config.provider === "openai") {
+    provider = new OpenAiProvider();
+  } else if (config.provider === "github") {
+    provider = new GitHubModelProvider();
+  } else {
+    provider = new MockProvider();
+  }
 
   return new WorkflowOrchestrator(provider, config);
 }
@@ -18,7 +21,8 @@ export async function resolveStageRequest(featureSlug: string, requestOverride: 
     return requestOverride;
   }
 
-  const featureStructure = new FeatureStructureService(rootDir);
+  const config = await loadConfig(path.join(rootDir, ".ec", "config", "project.yaml"));
+  const featureStructure = new FeatureStructureService(resolveWorkspacePaths(rootDir, config.workspace));
   const feature = await featureStructure.loadFeature(featureSlug);
 
   if (!feature.request.trim()) {

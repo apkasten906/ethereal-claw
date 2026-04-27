@@ -15,7 +15,7 @@ The reviewer acts as the local quality gate for the feature workspace. It checks
 
 ## Expected Artifact Content
 
-`features/<feature-slug>/review/consistency-review.md` should include:
+`.ec/features/<feature-slug>/review/consistency-review.md` should include:
 
 - traceability findings
 - missing or weak acceptance criteria
@@ -23,7 +23,7 @@ The reviewer acts as the local quality gate for the feature workspace. It checks
 - inconsistent assumptions
 - unresolved questions
 
-`features/<feature-slug>/review/code-review.md` currently records the human review gate placeholder.
+`.ec/features/<feature-slug>/review/code-review.md` currently records the human review gate placeholder.
 
 ## Quality Checklist
 
@@ -31,3 +31,4 @@ The reviewer acts as the local quality gate for the feature workspace. It checks
 - Missing artifacts are called out directly.
 - Review output distinguishes blockers from follow-up questions.
 - The artifact does not imply a GitHub PR review was submitted.
+

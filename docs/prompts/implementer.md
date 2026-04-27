@@ -16,7 +16,7 @@ The implementer creates a change plan for the feature. In this scaffold, it writ
 
 ## Expected Artifact Content
 
-`features/<feature-slug>/implementation/change-summary.md` should include:
+`.ec/features/<feature-slug>/implementation/change-summary.md` should include:
 
 - files or modules expected to change
 - implementation sequence
@@ -30,3 +30,4 @@ The implementer creates a change plan for the feature. In this scaffold, it writ
 - Proposed changes are scoped to the feature.
 - Risky or ambiguous changes are flagged.
 - Testing work is connected to implementation work.
+

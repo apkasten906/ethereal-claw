@@ -10,7 +10,7 @@ coverage/
 .env.local
 .idea/
 .vscode/
+.ec/
 
-# Generated feature and run artifacts stay in git, but nested runtime junk does not.
-features/**/.DS_Store
-runs/**/.DS_Store
+# Generated artifact placeholders stay in git, but nested runtime junk does not.
+.ec/**/.DS_Store

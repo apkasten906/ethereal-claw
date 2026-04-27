@@ -7,14 +7,15 @@ import { readUtf8 } from "../utils/file-system.js";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 export const bundledConfigExamplePath = path.resolve(moduleDir, "../../config/ethereal-claw.config.example.yaml");
+export const bundledAgentPoliciesPath = path.resolve(moduleDir, "../../../../config/agent-policies.yaml");
 
 export async function loadConfig(configPath?: string): Promise<ClawConfig> {
-  const defaultConfigPath = path.join(process.cwd(), "config", "ethereal-claw.config.yaml");
+  const defaultConfigPath = path.join(process.cwd(), ".ec", "config", "project.yaml");
   const candidate = configPath ?? defaultConfigPath;
   const usingFallback = !existsSync(candidate);
   const resolvedPath = usingFallback ? bundledConfigExamplePath : candidate;
 
-  if (usingFallback) {
+  if (usingFallback && !process.env["CI"] && !process.env["ETHEREAL_QUIET"]) {
     process.stderr.write(
       `[ethereal-claw] No config found at "${candidate}". Using bundled defaults (mock provider). Run "ethereal init" to create a local config.\n`
     );

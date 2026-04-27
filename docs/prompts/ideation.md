@@ -15,7 +15,7 @@ The ideation agent turns an unstructured request into a reviewable feature conce
 
 ## Expected Artifact Content
 
-`features/<feature-slug>/ideation.md` should include:
+`.ec/features/<feature-slug>/ideation.md` should include:
 
 - concise feature summary
 - assumptions
@@ -30,3 +30,4 @@ The ideation agent turns an unstructured request into a reviewable feature conce
 - Risks are actionable.
 - Candidate stories are scoped enough to plan.
 - Open questions are not hidden as invented certainty.
+

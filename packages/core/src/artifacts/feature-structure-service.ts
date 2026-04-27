@@ -1,6 +1,7 @@
 import path from "node:path";
 import { load, dump } from "js-yaml";
 import type { FeatureRecord } from "@ethereal-claw/shared";
+import type { WorkspacePaths } from "../config/workspace-paths.js";
 import { assertFeatureSlug, ensureDir, readUtf8, resolveWithin, writeFileEnsured } from "../utils/file-system.js";
 
 const featureStatuses = new Set<FeatureRecord["status"]>([
@@ -13,10 +14,10 @@ const featureStatuses = new Set<FeatureRecord["status"]>([
 ]);
 
 export class FeatureStructureService {
-  constructor(private readonly rootDir = process.cwd()) {}
+  constructor(private readonly workspacePaths: WorkspacePaths) {}
 
   featureRoot(slug: string): string {
-    return resolveWithin(this.rootDir, "features", assertFeatureSlug(slug));
+    return resolveWithin(this.workspacePaths.featuresDirectory, assertFeatureSlug(slug));
   }
 
   featureMetadataPath(slug: string): string {
