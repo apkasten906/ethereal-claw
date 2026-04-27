@@ -8,6 +8,8 @@ const featureStatuses = new Set<FeatureRecord["status"]>([
   "draft",
   "ideated",
   "planned",
+  "bdd-authored",
+  "consistency-reviewed",
   "implemented",
   "tested",
   "reviewed"
@@ -29,6 +31,7 @@ export class FeatureStructureService {
     const directories = [
       "stories",
       "bdd",
+      "traceability",
       "implementation",
       "tests",
       "review",

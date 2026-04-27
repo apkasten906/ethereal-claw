@@ -1,6 +1,8 @@
 export const workflowStages = [
   "ideate",
   "plan",
+  "bdd",
+  "review-consistency",
   "implement",
   "test",
   "review"

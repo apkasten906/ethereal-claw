@@ -15,6 +15,7 @@ import type { LlmProvider } from "../providers/llm-provider.js";
 import { slugify } from "../utils/slugs.js";
 import { nowUtcIso, runId } from "../utils/timestamps.js";
 import type { RunResult } from "./run-result.js";
+import type { AcceptanceCriterion, Story } from "@ethereal-claw/shared";
 
 export interface StageOptions {
   featureSlug?: string;
@@ -60,12 +61,7 @@ export class WorkflowOrchestrator {
       const ideation = await this.agents.ideation.run(options.request);
       this.recordExecution("ideation", ideation, "ideate");
 
-      const storyDraft = await this.agents.story.run(options.request);
-      this.recordExecution("story", storyDraft, "ideate");
-
       await this.artifacts.writeFeatureArtifact(feature.slug, "ideation.md", ideation.content);
-      await this.artifacts.writeFeatureArtifact(feature.slug, path.join("stories", "001-initial-story.md"), storyDraft.content);
-      await this.artifacts.writeFeatureArtifact(feature.slug, path.join("bdd", "001-initial.feature"), this.wrapGherkin(feature.title));
 
       return this.finishRun(feature.slug, "ideate", startedAt, options.dryRun ?? false, ["Ideation artifacts generated."]);
     } catch (error) {
@@ -85,13 +81,73 @@ export class WorkflowOrchestrator {
     try {
       const plan = await this.agents.planner.run(options.request);
       this.recordExecution("planner", plan, "plan");
+      const storyDraft = await this.agents.story.run(options.request);
+      this.recordExecution("story", storyDraft, "plan");
 
       await this.artifacts.writeFeatureArtifact(featureSlug, "plan.md", plan.content);
+      await this.artifacts.writeFeatureArtifact(
+        featureSlug,
+        path.join("stories", "001-initial-story.md"),
+        this.renderStoryMarkdown(this.buildInitialStory(options.request))
+      );
       await this.artifacts.writeFeatureArtifact(featureSlug, path.join("implementation", "tasks.md"), this.defaultTasks());
 
       return this.finishRun(featureSlug, "plan", startedAt, options.dryRun ?? false, ["Planning artifacts generated."]);
     } catch (error) {
       await this.finishRun(featureSlug, "plan", startedAt, options.dryRun ?? false,
+        [`Error: ${error instanceof Error ? error.message : String(error)}`], false)
+        .catch((logError: unknown) => { this.logger.warn({ logError }, "failed to write error run log"); });
+      throw error;
+    }
+  }
+
+  async bdd(options: StageOptions): Promise<RunResult> {
+    this.resetStageState();
+    const startedAt = nowUtcIso();
+    const featureSlug = this.resolveFeatureSlug(options);
+    await this.ensureExistingFeatureWorkspace(featureSlug);
+
+    try {
+      const feature = await this.featureStructure.loadFeature(featureSlug);
+      await this.artifacts.writeFeatureArtifact(
+        featureSlug,
+        path.join("bdd", "001-initial.feature"),
+        this.wrapGherkin(feature.title)
+      );
+      await this.artifacts.writeFeatureArtifact(
+        featureSlug,
+        path.join("traceability", "traceability-map.json"),
+        this.buildTraceabilityMap(featureSlug, feature.title, options.request)
+      );
+
+      return this.finishRun(featureSlug, "bdd", startedAt, options.dryRun ?? false, ["BDD and traceability artifacts generated."]);
+    } catch (error) {
+      await this.finishRun(featureSlug, "bdd", startedAt, options.dryRun ?? false,
+        [`Error: ${error instanceof Error ? error.message : String(error)}`], false)
+        .catch((logError: unknown) => { this.logger.warn({ logError }, "failed to write error run log"); });
+      throw error;
+    }
+  }
+
+  async reviewConsistency(options: StageOptions): Promise<RunResult> {
+    this.resetStageState();
+    const startedAt = nowUtcIso();
+    const featureSlug = this.resolveFeatureSlug(options);
+    await this.ensureExistingFeatureWorkspace(featureSlug);
+
+    try {
+      const review = await this.buildConsistencyReview(featureSlug);
+      await this.artifacts.writeFeatureArtifact(featureSlug, path.join("review", "consistency-review.md"), review);
+
+      return this.finishRun(
+        featureSlug,
+        "review-consistency",
+        startedAt,
+        options.dryRun ?? false,
+        ["Consistency review generated."]
+      );
+    } catch (error) {
+      await this.finishRun(featureSlug, "review-consistency", startedAt, options.dryRun ?? false,
         [`Error: ${error instanceof Error ? error.message : String(error)}`], false)
         .catch((logError: unknown) => { this.logger.warn({ logError }, "failed to write error run log"); });
       throw error;
@@ -151,8 +207,7 @@ export class WorkflowOrchestrator {
       const result = await this.agents.reviewer.run(options.request);
       this.recordExecution("reviewer", result, "review");
 
-      await this.artifacts.writeFeatureArtifact(featureSlug, path.join("review", "consistency-review.md"), result.content);
-      await this.artifacts.writeFeatureArtifact(featureSlug, path.join("review", "code-review.md"), "Human review gate pending.\n");
+      await this.artifacts.writeFeatureArtifact(featureSlug, path.join("review", "code-review.md"), result.content);
 
       return this.finishRun(featureSlug, "review", startedAt, options.dryRun ?? false, ["Review artifacts generated."]);
     } catch (error) {
@@ -169,6 +224,8 @@ export class WorkflowOrchestrator {
 
     return [
       await this.plan({ ...options, featureSlug }),
+      await this.bdd({ ...options, featureSlug }),
+      await this.reviewConsistency({ ...options, featureSlug }),
       await this.implement({ ...options, featureSlug }),
       await this.test({ ...options, featureSlug }),
       await this.review({ ...options, featureSlug })
@@ -279,8 +336,106 @@ export class WorkflowOrchestrator {
       "",
       "  Scenario: Initial workflow scaffold",
       "    Given a feature request exists",
-      "    When the orchestrator creates artifacts",
-      "    Then the feature workspace should contain BDD placeholders"
+      "    When the workflow reaches the BDD stage",
+      "    Then the feature workspace should contain an executable scenario scaffold"
+    ].join("\n");
+  }
+
+  private buildInitialStory(request: string): Story {
+    const normalizedRequest = request.replaceAll(/[\r\n]+/g, " ").trim() || "feature request";
+    const acceptanceCriteria: AcceptanceCriterion[] = [
+      {
+        id: "AC-1",
+        description: `The workflow defines a bounded first slice for ${normalizedRequest}.`,
+        testable: true
+      },
+      {
+        id: "AC-2",
+        description: "The slice can be represented as BDD scenarios and traced to implementation artifacts.",
+        testable: true
+      }
+    ];
+
+    return {
+      id: "001",
+      title: "Initial vertical slice",
+      summary: `Establish the first implementation-ready slice for ${normalizedRequest}.`,
+      acceptanceCriteria
+    };
+  }
+
+  private renderStoryMarkdown(story: Story): string {
+    return [
+      `# Story ${story.id}: ${story.title}`,
+      "",
+      "## Summary",
+      story.summary,
+      "",
+      "## Acceptance Criteria",
+      ...story.acceptanceCriteria.map((criterion, index) => `${index + 1}. [${criterion.id}] ${criterion.description}`),
+      "",
+      "## Agent Model",
+      "```json",
+      JSON.stringify(story, null, 2),
+      "```"
+    ].join("\n");
+  }
+
+  private buildTraceabilityMap(featureSlug: string, title: string, request: string): string {
+    return `${JSON.stringify({
+      featureSlug,
+      generatedAt: nowUtcIso(),
+      stories: [
+        {
+          storyId: "001",
+          storyTitle: "Initial vertical slice",
+          acceptanceCriteria: [
+            {
+              id: "AC-1",
+              description: `The workflow defines a bounded first slice for ${request.replaceAll(/[\r\n]+/g, " ").trim() || title}.`,
+              bddScenarios: ["001-initial.feature::Initial workflow scaffold"]
+            },
+            {
+              id: "AC-2",
+              description: "The slice can be represented as BDD scenarios and traced to implementation artifacts.",
+              bddScenarios: ["001-initial.feature::Initial workflow scaffold"]
+            }
+          ]
+        }
+      ]
+    }, null, 2)}\n`;
+  }
+
+  private async buildConsistencyReview(featureSlug: string): Promise<string> {
+    const checks = [
+      { label: "plan", artifactPath: "plan.md" },
+      { label: "stories", artifactPath: path.join("stories", "001-initial-story.md") },
+      { label: "bdd", artifactPath: path.join("bdd", "001-initial.feature") },
+      { label: "traceability", artifactPath: path.join("traceability", "traceability-map.json") }
+    ];
+
+    const results = await Promise.all(checks.map(async (check) => ({
+      ...check,
+      present: await this.artifacts.featureArtifactExists(featureSlug, check.artifactPath)
+    })));
+    const missing = results.filter((result) => !result.present).map((result) => result.label);
+    const status = missing.length === 0 ? "ready-for-implement" : "needs-attention";
+
+    return [
+      "# Consistency Review",
+      "",
+      `Status: ${status}`,
+      "",
+      "## Checks",
+      ...results.map((result) => `- ${result.label}: ${result.present ? "present" : "missing"}`),
+      "",
+      "## Findings",
+      ...(missing.length === 0
+        ? [
+          "- Stories, BDD, and traceability artifacts are present for the initial vertical slice.",
+          "- Ready to continue into implementation planning."
+        ]
+        : missing.map((artifact) => `- Missing required artifact: ${artifact}`))
     ].join("\n");
   }
 

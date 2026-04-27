@@ -1,3 +1,4 @@
+import { access } from "node:fs/promises";
 import type { RunLog } from "@ethereal-claw/shared";
 import type { WorkspacePaths } from "../config/workspace-paths.js";
 import { assertFeatureSlug, ensureDir, resolveWithin, writeFileEnsured } from "../utils/file-system.js";
@@ -12,6 +13,23 @@ export class ArtifactService {
     const featureRoot = resolveWithin(this.workspacePaths.featuresDirectory, safeFeatureSlug);
     const targetPath = resolveWithin(featureRoot, relativePath);
     await writeFileEnsured(targetPath, content);
+  }
+
+  async featureArtifactExists(featureSlug: string, relativePath: string): Promise<boolean> {
+    const safeFeatureSlug = assertFeatureSlug(featureSlug);
+    const featureRoot = resolveWithin(this.workspacePaths.featuresDirectory, safeFeatureSlug);
+    const targetPath = resolveWithin(featureRoot, relativePath);
+
+    try {
+      await access(targetPath);
+      return true;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return false;
+      }
+
+      throw error;
+    }
   }
 
   async ensureRuntimeDirectories(): Promise<void> {

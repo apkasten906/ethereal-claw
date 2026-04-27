@@ -49,14 +49,18 @@ describe("WorkflowOrchestrator", () => {
       dryRun: true
     });
 
-    expect(results).toHaveLength(4);
+    expect(results).toHaveLength(6);
     expect(results[0]?.run.stage).toBe("plan");
-    expect(results[0]?.run.executions).toHaveLength(1);
-    expect(results[3]?.run.executions).toHaveLength(1);
-    expect(results[3]?.run.executions[0]?.agent).toBe("reviewer");
+    expect(results[0]?.run.executions).toHaveLength(2);
+    expect(results[1]?.run.stage).toBe("bdd");
+    expect(results[1]?.run.executions).toHaveLength(0);
+    expect(results[2]?.run.stage).toBe("review-consistency");
+    expect(results[2]?.run.executions).toHaveLength(0);
+    expect(results[5]?.run.executions).toHaveLength(1);
+    expect(results[5]?.run.executions[0]?.agent).toBe("reviewer");
 
     const runFiles = await readdir(path.join(root, ".ec", "runs"));
-    expect(runFiles).toHaveLength(5);
+    expect(runFiles).toHaveLength(7);
   });
 
   it("does not rerun ideation or rewrite feature metadata during a full run", async () => {
@@ -82,7 +86,14 @@ describe("WorkflowOrchestrator", () => {
 
     const afterRun = await readFile(featurePath, "utf8");
 
-    expect(results.map((result) => result.run.stage)).toEqual(["plan", "implement", "test", "review"]);
+    expect(results.map((result) => result.run.stage)).toEqual([
+      "plan",
+      "bdd",
+      "review-consistency",
+      "implement",
+      "test",
+      "review"
+    ]);
     expect(afterRun).toBe(beforeRun);
   });
 
@@ -231,6 +242,11 @@ describe("WorkflowOrchestrator", () => {
       request: "feature with multiline title",
       dryRun: true
     });
+    await orchestrator.bdd({
+      featureSlug: "feature-multiline-title",
+      request: "feature with multiline title",
+      dryRun: true
+    });
 
     const bddContent = await readFile(
       path.join(root, ".ec", "features", "feature-multiline-title", "bdd", "001-initial.feature"),
@@ -239,6 +255,64 @@ describe("WorkflowOrchestrator", () => {
 
     expect(bddContent).not.toContain("\nLine two");
     expect(bddContent).toMatch(/^Feature: Line one Line two$/m);
+  });
+
+  it("moves story generation to plan and leaves ideate focused on ideation artifacts", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    await expect(access(path.join(root, ".ec", "features", "feature-auth-refresh", "ideation.md"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, ".ec", "features", "feature-auth-refresh", "stories", "001-initial-story.md"))).rejects.toThrow();
+    await expect(access(path.join(root, ".ec", "features", "feature-auth-refresh", "bdd", "001-initial.feature"))).rejects.toThrow();
+
+    await orchestrator.plan({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    await expect(access(path.join(root, ".ec", "features", "feature-auth-refresh", "stories", "001-initial-story.md"))).resolves.toBeUndefined();
+  });
+
+  it("generates BDD, traceability, and consistency review artifacts as separate stages", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.plan({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    const bddResult = await orchestrator.bdd({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    const reviewResult = await orchestrator.reviewConsistency({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    expect(bddResult.run.stage).toBe("bdd");
+    expect(reviewResult.run.stage).toBe("review-consistency");
+    await expect(access(path.join(root, ".ec", "features", "feature-auth-refresh", "bdd", "001-initial.feature"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, ".ec", "features", "feature-auth-refresh", "traceability", "traceability-map.json"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, ".ec", "features", "feature-auth-refresh", "review", "consistency-review.md"))).resolves.toBeUndefined();
   });
 
   it("throws when the budget hard-stop threshold is reached", async () => {

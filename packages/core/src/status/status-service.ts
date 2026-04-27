@@ -52,14 +52,15 @@ interface ArtifactDefinition {
 
 const artifactDefinitions: ArtifactDefinition[] = [
   { label: "ideation", path: "ideation.md", kind: "file", stage: "ideate" },
-  { label: "stories", path: "stories", kind: "directory", stage: "ideate" },
-  { label: "bdd", path: "bdd", kind: "directory", stage: "ideate" },
   { label: "plan", path: "plan.md", kind: "file", stage: "plan" },
+  { label: "stories", path: "stories", kind: "directory", stage: "plan" },
   { label: "implementation tasks", path: "implementation/tasks.md", kind: "file", stage: "plan" },
+  { label: "bdd", path: "bdd", kind: "directory", stage: "bdd" },
+  { label: "traceability map", path: "traceability/traceability-map.json", kind: "file", stage: "bdd" },
+  { label: "consistency review", path: "review/consistency-review.md", kind: "file", stage: "review-consistency" },
   { label: "implementation summary", path: "implementation/change-summary.md", kind: "file", stage: "implement" },
   { label: "test plan", path: "tests/test-plan.md", kind: "file", stage: "test" },
   { label: "generated tests", path: "tests/generated-tests.md", kind: "file", stage: "test" },
-  { label: "consistency review", path: "review/consistency-review.md", kind: "file", stage: "review" },
   { label: "code review", path: "review/code-review.md", kind: "file", stage: "review" }
 ];
 
@@ -226,6 +227,10 @@ export class StatusService {
         return "ideate";
       case "planned":
         return "plan";
+      case "bdd-authored":
+        return "bdd";
+      case "consistency-reviewed":
+        return "review-consistency";
       case "implemented":
         return "implement";
       case "tested":
@@ -249,6 +254,10 @@ export class StatusService {
       case "ideate":
         return `ec plan ${feature.slug}`;
       case "plan":
+        return `ec bdd ${feature.slug}`;
+      case "bdd":
+        return `ec review-consistency ${feature.slug}`;
+      case "review-consistency":
         return `ec implement ${feature.slug}`;
       case "implement":
         return `ec test ${feature.slug}`;
