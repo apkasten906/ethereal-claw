@@ -7,6 +7,11 @@ import { clawConfigSchema } from "../../packages/core/src/config/config-schema.j
 import { resolveWorkspacePaths } from "../../packages/core/src/config/workspace-paths.js";
 
 const tempDirs: string[] = [];
+const defaultWorkspace = clawConfigSchema.parse({}).workspace;
+
+function createService(root: string, workspace = defaultWorkspace): ArtifactService {
+  return new ArtifactService(resolveWorkspacePaths(root, workspace));
+}
 
 afterEach(async () => {
   await Promise.all(tempDirs.map((dir) => rm(dir, { recursive: true, force: true })));
@@ -14,10 +19,6 @@ afterEach(async () => {
 });
 
 describe("ArtifactService", () => {
-  function createService(root: string, workspace = clawConfigSchema.parse({}).workspace): ArtifactService {
-    return new ArtifactService(resolveWorkspacePaths(root, workspace));
-  }
-
   it("rejects path traversal in feature slugs", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-artifacts-"));
     tempDirs.push(root);
@@ -78,7 +79,7 @@ describe("ArtifactService", () => {
     const service = createService(root);
 
     await expect(
-      service.writeFeatureArtifact("feature-ok", "..\\..\\escape.txt", "content")
+      service.writeFeatureArtifact("feature-ok", String.raw`..\..\escape.txt`, "content")
     ).rejects.toThrow(/escapes root directory/i);
   });
 

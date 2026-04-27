@@ -2,9 +2,10 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { FeatureStructureService, StatusService } from "../../packages/core/src/index.js";
+import { FeatureStructureService } from "../../packages/core/src/artifacts/feature-structure-service.js";
 import { clawConfigSchema } from "../../packages/core/src/config/config-schema.js";
 import { resolveWorkspacePaths } from "../../packages/core/src/config/workspace-paths.js";
+import { StatusService } from "../../packages/core/src/status/status-service.js";
 import { formatFeatureStatus } from "../../packages/cli/src/commands/status-command.js";
 
 const tempDirs: string[] = [];

@@ -9,6 +9,11 @@ import { resolveStageRequest } from "../../packages/cli/src/commands/command-sup
 
 const originalCwd = process.cwd();
 const tempDirs: string[] = [];
+const defaultWorkspace = clawConfigSchema.parse({}).workspace;
+
+function createFeatureStructure(root: string): FeatureStructureService {
+  return new FeatureStructureService(resolveWorkspacePaths(root, defaultWorkspace));
+}
 
 afterEach(async () => {
   process.chdir(originalCwd);
@@ -17,10 +22,6 @@ afterEach(async () => {
 });
 
 describe("resolveStageRequest", () => {
-  function createFeatureStructure(root: string): FeatureStructureService {
-    return new FeatureStructureService(resolveWorkspacePaths(root, clawConfigSchema.parse({}).workspace));
-  }
-
   it("loads the saved feature request when no override is provided", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-command-support-"));
     tempDirs.push(root);

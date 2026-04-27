@@ -7,6 +7,11 @@ import { clawConfigSchema } from "../../packages/core/src/config/config-schema.j
 import { resolveWorkspacePaths } from "../../packages/core/src/config/workspace-paths.js";
 
 const tempDirs: string[] = [];
+const defaultWorkspace = clawConfigSchema.parse({}).workspace;
+
+function createService(root: string, workspace = defaultWorkspace): FeatureStructureService {
+  return new FeatureStructureService(resolveWorkspacePaths(root, workspace));
+}
 
 afterEach(async () => {
   await Promise.all(tempDirs.map((dir) => rm(dir, { recursive: true, force: true })));
@@ -14,10 +19,6 @@ afterEach(async () => {
 });
 
 describe("FeatureStructureService", () => {
-  function createService(root: string, workspace = clawConfigSchema.parse({}).workspace): FeatureStructureService {
-    return new FeatureStructureService(resolveWorkspacePaths(root, workspace));
-  }
-
   it("creates the expected feature workspace", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-"));
     tempDirs.push(root);

@@ -177,11 +177,13 @@ export class StatusService {
     );
     const validRuns = runs.filter((run): run is RunLog => run !== null);
 
-    return validRuns.sort((left, right) => {
+    validRuns.sort((left, right) => {
       const leftTime = left.completedAt || left.startedAt;
       const rightTime = right.completedAt || right.startedAt;
       return rightTime.localeCompare(leftTime);
-    })[0] ?? null;
+    });
+    
+    return validRuns[0] ?? null;
   }
 
   private async loadRunLog(runPath: string): Promise<RunLog | null> {
