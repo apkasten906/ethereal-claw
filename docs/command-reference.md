@@ -28,6 +28,13 @@ Every stage writes a run log to both:
 
 Commands after `ideate` require an existing feature workspace. The `--request` option only overrides the saved request text; it does not create a missing `.ec/features/<feature-slug>/feature.yaml`.
 
+Conflict and overwrite policy:
+
+- interactive commands may prompt when overwrite decisions are required
+- non-interactive and `--json` usage must never prompt
+- automation-safe conflicts return deterministic errors
+- stage-owned deterministic artifacts may be regenerated only when they remain synchronized; otherwise the command fails instead of silently replacing them
+
 ## `ethereal init`
 
 Create baseline runtime directories and local configuration.

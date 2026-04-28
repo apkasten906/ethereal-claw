@@ -172,6 +172,28 @@ Artifacts must serve two audiences.
 
 Each artifact type must define a source of truth. Derived representations must be reproducible or validated. Divergence must be reported during `review-consistency`; the system must not silently overwrite conflicting data.
 
+### Conflict and write-safety rules
+
+The workflow must fail closed when existing state conflicts with a newly requested write.
+
+Rules:
+
+* overwrites must be explicit
+* interactive commands may prompt for overwrite confirmation
+* non-interactive and `--json` flows must never prompt
+* duplicate or conflict conditions in automation mode must return deterministic errors
+* whole-workspace replacement must use stage-then-swap semantics
+* post-commit cleanup failures must be warnings, not rollback triggers
+* deterministic artifacts must avoid volatile fields in equality or synchronization checks
+* user-edited or diverged artifacts must not be silently replaced
+
+Implications:
+
+* `ideate` may replace a feature workspace only when overwrite is explicitly confirmed
+* commands that regenerate artifacts should either reproduce byte-stable output or fail with a divergence error
+* run logs are the correct place for volatile metadata such as timing and provider execution details
+* future source-code writing stages must adopt the same explicit-overwrite and rollback-boundary rules
+
 ---
 
 ## CLI Output Contract

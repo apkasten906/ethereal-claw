@@ -20,6 +20,20 @@ Each stage writes artifacts into a feature workspace and appends a run log entry
 
 Use `ethereal status` or `ec status` to list known feature workspaces and their next recommended commands. Use `ec status <feature-slug>` for a feature-specific view of current stage, available artifacts, missing artifacts, latest run result, and token usage. Status reads local workspace files only and does not call an LLM provider.
 
+## Write Safety
+
+The workflow is intentionally conservative when existing workspace state conflicts with new output.
+
+Rules:
+
+* Overwrites must be explicit.
+* Interactive commands may prompt; non-interactive and `--json` usage must not prompt.
+* Automation paths must return deterministic conflict errors.
+* Whole-workspace replacement must stage new content before swapping it into place.
+* Cleanup failure after a committed write is a warning, not a rollback trigger.
+* Deterministic artifacts should not include volatile fields that break idempotent reruns.
+* Diverged user-edited artifacts should fail closed instead of being silently replaced.
+
 ## Ideate
 
 `ideate` starts the workflow. It accepts a rough request, creates a stable feature slug, writes `feature.yaml`, and creates the initial ideation artifact.
