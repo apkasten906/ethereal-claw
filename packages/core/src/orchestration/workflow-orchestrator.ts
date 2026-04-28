@@ -132,7 +132,9 @@ export class WorkflowOrchestrator {
       const tasksPath = path.join("implementation", "tasks.md");
       const storyContent = renderStoryMarkdown(story);
 
+      await this.assertSafeToWriteArtifact(featureSlug, planPath, plan.content);
       await this.assertSafeToWriteStory(featureSlug, storyPath, storyContent, story);
+      await this.assertSafeToWriteArtifact(featureSlug, tasksPath, this.defaultTasks());
       await this.artifacts.writeFeatureArtifact(featureSlug, planPath, plan.content);
       await this.artifacts.writeFeatureArtifact(featureSlug, storyPath, storyContent);
       await this.artifacts.writeFeatureArtifact(featureSlug, tasksPath, this.defaultTasks());
@@ -212,6 +214,7 @@ export class WorkflowOrchestrator {
       );
       const review = await this.buildConsistencyReview(featureSlug);
       const reviewPath = path.join("review", "consistency-review.md");
+      await this.assertSafeToWriteArtifact(featureSlug, reviewPath, review);
       await this.artifacts.writeFeatureArtifact(featureSlug, reviewPath, review);
 
       return this.finishRun(
@@ -244,6 +247,7 @@ export class WorkflowOrchestrator {
       const result = await this.agents.implementer.run(options.request);
       this.recordExecution("implementer", result, "implement");
       const summaryPath = path.join("implementation", "change-summary.md");
+      await this.assertSafeToWriteArtifact(featureSlug, summaryPath, result.content);
       await this.artifacts.writeFeatureArtifact(featureSlug, summaryPath, result.content);
 
       return this.finishRun(featureSlug, "implement", startedAt, options.dryRun ?? false, ["Implementation plan generated."]);
@@ -271,6 +275,8 @@ export class WorkflowOrchestrator {
       this.recordExecution("tester", result, "test");
       const testPlanPath = path.join("tests", "test-plan.md");
       const generatedTestsPath = path.join("tests", "generated-tests.md");
+      await this.assertSafeToWriteArtifact(featureSlug, testPlanPath, result.content);
+      await this.assertSafeToWriteArtifact(featureSlug, generatedTestsPath, this.defaultGeneratedTests());
       await this.artifacts.writeFeatureArtifact(featureSlug, testPlanPath, result.content);
       await this.artifacts.writeFeatureArtifact(featureSlug, generatedTestsPath, this.defaultGeneratedTests());
 
@@ -298,6 +304,7 @@ export class WorkflowOrchestrator {
       const result = await this.agents.reviewer.run(options.request);
       this.recordExecution("reviewer", result, "review");
       const reviewPath = path.join("review", "code-review.md");
+      await this.assertSafeToWriteArtifact(featureSlug, reviewPath, result.content);
       await this.artifacts.writeFeatureArtifact(featureSlug, reviewPath, result.content);
 
       return this.finishRun(featureSlug, "review", startedAt, options.dryRun ?? false, ["Review artifacts generated."]);
@@ -518,8 +525,8 @@ export class WorkflowOrchestrator {
           await this.artifacts.readFeatureArtifact(featureSlug, path.join("traceability", "traceability-map.json"))
         );
 
-        findings.push(...this.validateStoryAgainstTraceability(story, traceability));
-        findings.push(...this.validateTraceabilityAgainstBdd(traceability, bddScenarios));
+        findings.push(...this.validateStoryAgainstTraceability(story, traceability), 
+          ...this.validateTraceabilityAgainstBdd(traceability, bddScenarios));
       } catch (error) {
         if (error instanceof StoryArtifactError || error instanceof TraceabilityMapError || error instanceof SyntaxError) {
           findings.push(error.message);

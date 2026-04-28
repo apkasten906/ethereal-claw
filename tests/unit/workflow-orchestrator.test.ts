@@ -426,6 +426,34 @@ describe("WorkflowOrchestrator", () => {
     ).rejects.toThrow(/Refusing to overwrite diverged artifact/);
   });
 
+  it("refuses to overwrite diverged plan artifacts", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.plan({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    const planPath = path.join(root, ".ec", "features", "feature-auth-refresh", "plan.md");
+    await writeFile(planPath, "# manually diverged plan\n", "utf8");
+
+    await expect(
+      orchestrator.plan({
+        featureSlug: "feature-auth-refresh",
+        request: "refresh tokens for admins",
+        dryRun: true
+      })
+    ).rejects.toThrow(/Refusing to overwrite diverged artifact "plan\.md"/);
+  });
+
   it("reports artifact divergence during consistency review", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
     tempDirs.push(root);
@@ -480,6 +508,49 @@ describe("WorkflowOrchestrator", () => {
     expect(review).toContain("Status: needs-attention");
     expect(review).toContain("Acceptance criterion AC-1 description diverges");
     expect(review).toContain("Acceptance criterion AC-1 has no BDD scenario mappings.");
+  });
+
+  it("refuses to overwrite diverged implementation artifacts", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.plan({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.bdd({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.reviewConsistency({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.implement({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    const summaryPath = path.join(root, ".ec", "features", "feature-auth-refresh", "implementation", "change-summary.md");
+    await writeFile(summaryPath, "# manually diverged summary\n", "utf8");
+
+    await expect(
+      orchestrator.implement({
+        featureSlug: "feature-auth-refresh",
+        request: "refresh tokens for admins",
+        dryRun: true
+      })
+    ).rejects.toThrow(/Refusing to overwrite diverged artifact "implementation\\change-summary\.md"|Refusing to overwrite diverged artifact "implementation\/change-summary\.md"/);
   });
 
   it("restores the existing feature workspace when an overwrite attempt fails", async () => {
