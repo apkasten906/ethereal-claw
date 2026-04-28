@@ -24,6 +24,8 @@ Use `ethereal status` or `ec status` to list known feature workspaces and their 
 
 `ideate` starts the workflow. It accepts a rough request, creates a stable feature slug, writes `feature.yaml`, and creates the initial ideation artifact.
 
+If the derived feature slug already exists, interactive CLI usage prompts for overwrite confirmation. Non-interactive and `--json` usage require an explicit overwrite decision and otherwise fail cleanly without prompting.
+
 Use this stage when the feature does not already have a workspace.
 
 ## Plan

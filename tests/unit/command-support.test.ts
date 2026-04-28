@@ -101,13 +101,14 @@ describe("resolveIdeateConflict", () => {
     tempDirs.push(root);
 
     const { resolveIdeateConflict } = await import("../../packages/cli/src/commands/command-support.js");
-    await expect(resolveIdeateConflict("refresh tokens for admins", root, createConfig())).resolves.toEqual({
-      featureSlug: "feature-refresh-tokens-for-admins",
-      overwritten: false
-    });
+      await expect(resolveIdeateConflict("refresh tokens for admins", root, createConfig())).resolves.toEqual({
+        featureSlug: "feature-refresh-tokens-for-admins",
+        overwritten: false,
+        cancelled: false
+      });
   });
 
-  it("generates a new slug when overwrite is declined", async () => {
+  it("cancels when overwrite is declined", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-command-support-"));
     tempDirs.push(root);
 
@@ -128,14 +129,21 @@ describe("resolveIdeateConflict", () => {
         close: vi.fn()
       })
     }));
+    const savedStdinTty = process.stdin.isTTY;
+    const savedStdoutTty = process.stdout.isTTY;
+    Object.defineProperty(process.stdin, "isTTY", { configurable: true, value: true });
+    Object.defineProperty(process.stdout, "isTTY", { configurable: true, value: true });
 
     try {
       const { resolveIdeateConflict } = await import("../../packages/cli/src/commands/command-support.js");
       await expect(resolveIdeateConflict("refresh tokens for admins", root, createConfig())).resolves.toEqual({
-        featureSlug: "feature-refresh-tokens-for-admins-2",
-        overwritten: false
+        featureSlug: "feature-refresh-tokens-for-admins",
+        overwritten: false,
+        cancelled: true
       });
     } finally {
+      Object.defineProperty(process.stdin, "isTTY", { configurable: true, value: savedStdinTty });
+      Object.defineProperty(process.stdout, "isTTY", { configurable: true, value: savedStdoutTty });
       vi.doUnmock("node:readline/promises");
       vi.resetModules();
     }
@@ -168,18 +176,56 @@ describe("resolveIdeateConflict", () => {
         close: vi.fn()
       })
     }));
+    const savedStdinTty = process.stdin.isTTY;
+    const savedStdoutTty = process.stdout.isTTY;
+    Object.defineProperty(process.stdin, "isTTY", { configurable: true, value: true });
+    Object.defineProperty(process.stdout, "isTTY", { configurable: true, value: true });
 
     try {
       const { resolveIdeateConflict } = await import("../../packages/cli/src/commands/command-support.js");
       await expect(resolveIdeateConflict("refresh tokens for admins", root, createConfig())).resolves.toEqual({
         featureSlug: "feature-refresh-tokens-for-admins",
-        overwritten: true
+        overwritten: true,
+        cancelled: false
       });
       await expect(
         createFeatureStructure(root).workspaceExists("feature-refresh-tokens-for-admins")
       ).resolves.toBe(true);
     } finally {
+      Object.defineProperty(process.stdin, "isTTY", { configurable: true, value: savedStdinTty });
+      Object.defineProperty(process.stdout, "isTTY", { configurable: true, value: savedStdoutTty });
       vi.doUnmock("node:readline/promises");
+      vi.resetModules();
+    }
+  });
+
+  it("requires --overwrite for non-interactive conflicts", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-command-support-"));
+    tempDirs.push(root);
+
+    const featureStructure = createFeatureStructure(root);
+    await featureStructure.createWorkspace({
+      slug: "feature-refresh-tokens-for-admins",
+      title: "Auth Refresh",
+      request: "refresh tokens for admins",
+      status: "draft",
+      createdAt: "2026-04-17T00:00:00.000Z",
+      updatedAt: "2026-04-17T00:00:00.000Z"
+    });
+
+    const savedStdinTty = process.stdin.isTTY;
+    const savedStdoutTty = process.stdout.isTTY;
+    Object.defineProperty(process.stdin, "isTTY", { configurable: true, value: false });
+    Object.defineProperty(process.stdout, "isTTY", { configurable: true, value: false });
+
+    try {
+      const { resolveIdeateConflict } = await import("../../packages/cli/src/commands/command-support.js");
+      await expect(
+        resolveIdeateConflict("refresh tokens for admins", root, createConfig(), { json: true })
+      ).rejects.toThrow('Feature workspace "feature-refresh-tokens-for-admins" already exists. Re-run with --overwrite to replace it.');
+    } finally {
+      Object.defineProperty(process.stdin, "isTTY", { configurable: true, value: savedStdinTty });
+      Object.defineProperty(process.stdout, "isTTY", { configurable: true, value: savedStdoutTty });
       vi.resetModules();
     }
   });

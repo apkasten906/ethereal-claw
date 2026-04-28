@@ -145,6 +145,26 @@ describe("WorkflowOrchestrator", () => {
     expect(implementResult.run.featureSlug).toBe("feature-refresh-tokens-for-admins");
   });
 
+  it("refuses to ideate into an existing workspace without overwrite enabled", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    await expect(
+      orchestrator.ideate({
+        featureSlug: "feature-auth-refresh",
+        request: "refresh tokens for admins",
+        dryRun: true
+      })
+    ).rejects.toThrow('Feature workspace "feature-auth-refresh" already exists. Re-run with overwrite enabled to replace it.');
+  });
+
   it("does not record the caller cwd branch for non-git workspaces", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
     tempDirs.push(root);
@@ -509,6 +529,52 @@ describe("WorkflowOrchestrator", () => {
     ) as { success: boolean; notes: string[] };
     expect(latestRun.success).toBe(false);
     expect(latestRun.notes.some((note) => note.includes("provider unavailable"))).toBe(true);
+  });
+
+  it("keeps the replacement workspace when backup cleanup fails after commit", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const featureRoot = path.join(root, ".ec", "features", "feature-auth-refresh");
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await writeFile(path.join(featureRoot, "ideation.md"), "old ideation\n", "utf8");
+
+    const { FeatureStructureService } = await import("../../packages/core/src/artifacts/feature-structure-service.js");
+    const originalReplace = FeatureStructureService.prototype.replaceWorkspaceFromStaging;
+    const replacementSpy = vi.spyOn(FeatureStructureService.prototype, "replaceWorkspaceFromStaging").mockImplementation(async function (slug, stagingRoot) {
+      const replacement = await originalReplace.call(this, slug, stagingRoot);
+
+      return {
+        finalize: async () => {
+          await replacement.finalize();
+          throw new Error("cleanup failed");
+        },
+        rollback: replacement.rollback
+      };
+    });
+
+    try {
+      await expect(
+        orchestrator.ideate({
+          featureSlug: "feature-auth-refresh",
+          request: "refresh tokens for admins",
+          dryRun: true,
+          overwriteExisting: true
+        })
+      ).resolves.toMatchObject({
+        success: true
+      });
+
+      const ideation = await readFile(path.join(featureRoot, "ideation.md"), "utf8");
+      expect(ideation).not.toBe("old ideation\n");
+    } finally {
+      replacementSpy.mockRestore();
+    }
   });
 
   it("throws when the budget hard-stop threshold is reached", async () => {

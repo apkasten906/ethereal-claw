@@ -26,6 +26,15 @@ export interface StageOptions {
   overwriteExisting?: boolean;
 }
 
+export class FeatureWorkspaceConflictError extends Error {
+  constructor(
+    readonly featureSlug: string,
+    message = `Feature workspace "${featureSlug}" already exists. Re-run with overwrite enabled to replace it.`
+  ) {
+    super(message);
+  }
+}
+
 export class WorkflowOrchestrator {
   private readonly logger = createLogger();
   private readonly budget: BudgetManager;
@@ -55,9 +64,15 @@ export class WorkflowOrchestrator {
     this.resetStageState();
     const startedAt = nowUtcIso();
     const feature = this.buildFeature(options);
-    const overwriteExisting = options.overwriteExisting === true && await this.featureStructure.workspaceExists(feature.slug);
+    const workspaceExists = await this.featureStructure.workspaceExists(feature.slug);
+    if (workspaceExists && options.overwriteExisting !== true) {
+      throw new FeatureWorkspaceConflictError(feature.slug);
+    }
+
+    const overwriteExisting = options.overwriteExisting === true && workspaceExists;
     let stagingRoot: string | undefined;
     let replacement: import("../artifacts/feature-structure-service.js").WorkspaceReplacement | undefined;
+    let result!: RunResult;
 
     try {
       if (overwriteExisting) {
@@ -75,9 +90,7 @@ export class WorkflowOrchestrator {
         await this.artifacts.writeFeatureArtifact(feature.slug, ideationPath, ideation.content);
       }
 
-      const result = await this.finishRun(feature.slug, "ideate", startedAt, options.dryRun ?? false, ["Ideation artifacts generated."]);
-      await replacement?.finalize();
-      return result;
+      result = await this.finishRun(feature.slug, "ideate", startedAt, options.dryRun ?? false, ["Ideation artifacts generated."]);
     } catch (error) {
       if (replacement) {
         await replacement.rollback().catch((rollbackError: unknown) => {
@@ -93,6 +106,12 @@ export class WorkflowOrchestrator {
         .catch((logError: unknown) => { this.logger.warn({ logError }, "failed to write error run log"); });
       throw error;
     }
+
+    await replacement?.finalize().catch((finalizeError: unknown) => {
+      this.logger.warn({ finalizeError }, "failed to clean up overwritten feature workspace backup");
+    });
+
+    return result;
   }
 
   async plan(options: StageOptions): Promise<RunResult> {

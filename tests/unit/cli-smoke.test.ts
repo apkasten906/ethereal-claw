@@ -132,6 +132,20 @@ describe("CLI smoke", () => {
     expect(runLog.dryRun).toBe(true);
   });
 
+  it("returns a structured conflict error for ideate --json without prompting", async () => {
+    const root = await createTempWorkspace();
+    await mkdir(path.join(root, ".ec", "config"), { recursive: true });
+    await copyFile(exampleConfig, path.join(root, ".ec", "config", "project.yaml"));
+
+    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run", "--json"]);
+
+    await expect(runCli(root, ["ideate", "Add secure login audit history", "--dry-run", "--json"]))
+      .rejects.toMatchObject({
+        stdout: expect.stringContaining("\"code\": \"feature_conflict\""),
+        stderr: ""
+      });
+  });
+
   it("loads the saved feature request for later stages when --request is omitted", async () => {
     const root = await createTempWorkspace();
 

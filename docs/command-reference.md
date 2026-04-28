@@ -69,6 +69,8 @@ ec ideate "multi-tenant auth for admin portal"
 Options:
 
 - `--dry-run`: mark the run log as a dry-run execution.
+- `--overwrite`: replace an existing feature workspace with the same slug.
+- `--json`: emit the run log as JSON instead of the default report.
 
 Writes:
 
@@ -77,6 +79,12 @@ Writes:
 - run logs under `.ec/runs/` and `.ec/features/<feature-slug>/run-history/`
 
 The feature slug is generated from the request with a `feature-` prefix unless the core API is called directly with an explicit slug.
+
+If a matching feature already exists:
+
+- interactive mode prompts: `A feature with the name you provided already exists. Overwrite? [Y]es or [N]o.`
+- answering `No` or pressing Enter cancels the operation without changing the existing workspace
+- non-interactive and `--json` usage do not prompt; pass `--overwrite` or handle the reported conflict error
 
 Related docs:
 

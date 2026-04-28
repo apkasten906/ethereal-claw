@@ -1,7 +1,7 @@
 import path from "node:path";
 import { createInterface } from "node:readline/promises";
 import type { ClawConfig, RunResult } from "@ethereal-claw/core";
-import { FeatureStructureService, GitHubModelProvider, loadConfig, MockProvider, OpenAiProvider, resolveWorkspacePaths, slugify, WorkflowOrchestrator } from "@ethereal-claw/core";
+import { FeatureStructureService, FeatureWorkspaceConflictError, GitHubModelProvider, loadConfig, MockProvider, OpenAiProvider, resolveWorkspacePaths, slugify, WorkflowOrchestrator } from "@ethereal-claw/core";
 import { formatCommandReport, multiRunToReport, stageRunToReport } from "../presentation/command-report.js";
 import { printJson, printMessage } from "../presentation/console-output.js";
 
@@ -44,12 +44,19 @@ export async function resolveStageRequest(featureSlug: string, requestOverride: 
 export interface IdeateResolution {
   featureSlug?: string;
   overwritten: boolean;
+  cancelled: boolean;
+}
+
+export interface ResolveIdeateConflictOptions {
+  overwrite?: boolean;
+  json?: boolean;
 }
 
 export async function resolveIdeateConflict(
   request: string,
   rootDir: string,
-  config: ClawConfig
+  config: ClawConfig,
+  options: ResolveIdeateConflictOptions = {}
 ): Promise<IdeateResolution> {
   const slug = slugify(request);
   if (!slug) {
@@ -60,7 +67,19 @@ export async function resolveIdeateConflict(
   const featureStructure = new FeatureStructureService(resolveWorkspacePaths(rootDir, config.workspace));
 
   if (!await featureStructure.workspaceExists(baseSlug)) {
-    return { featureSlug: baseSlug, overwritten: false };
+    return { featureSlug: baseSlug, overwritten: false, cancelled: false };
+  }
+
+  if (options.overwrite) {
+    return { featureSlug: baseSlug, overwritten: true, cancelled: false };
+  }
+
+  const interactive = !options.json && process.stdin.isTTY === true && process.stdout.isTTY === true;
+  if (!interactive) {
+    throw new FeatureWorkspaceConflictError(
+      baseSlug,
+      `Feature workspace "${baseSlug}" already exists. Re-run with --overwrite to replace it.`
+    );
   }
 
   const rl = createInterface({
@@ -74,29 +93,17 @@ export async function resolveIdeateConflict(
     )).trim().toLowerCase();
 
     if (answer === "yes" || answer === "y") {
-      return { featureSlug: baseSlug, overwritten: true };
+      return { featureSlug: baseSlug, overwritten: true, cancelled: false };
     }
 
     if (answer === "no" || answer === "n" || answer === "") {
-      return { featureSlug: await nextAvailableFeatureSlug(baseSlug, featureStructure), overwritten: false };
+      return { featureSlug: baseSlug, overwritten: false, cancelled: true };
     }
 
     throw new Error('Expected "yes" or "no".');
   } finally {
     rl.close();
   }
-}
-
-async function nextAvailableFeatureSlug(baseSlug: string, featureStructure: FeatureStructureService): Promise<string> {
-  let counter = 2;
-  let candidate = `${baseSlug}-${counter}`;
-
-  while (await featureStructure.workspaceExists(candidate)) {
-    counter += 1;
-    candidate = `${baseSlug}-${counter}`;
-  }
-
-  return candidate;
 }
 
 export function stagePaths(command: string, featureSlug: string, rootDir: string, config: ClawConfig): { read: string[]; written: string[]; next: string } {
