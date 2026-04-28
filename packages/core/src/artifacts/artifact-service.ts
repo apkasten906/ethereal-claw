@@ -1,4 +1,5 @@
-import { access } from "node:fs/promises";
+import { access, readFile, readdir } from "node:fs/promises";
+import path from "node:path";
 import type { RunLog } from "@ethereal-claw/shared";
 import type { WorkspacePaths } from "../config/workspace-paths.js";
 import { assertFeatureSlug, ensureDir, resolveWithin, writeFileEnsured } from "../utils/file-system.js";
@@ -26,6 +27,32 @@ export class ArtifactService {
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") {
         return false;
+      }
+
+      throw error;
+    }
+  }
+
+  async readFeatureArtifact(featureSlug: string, relativePath: string): Promise<string> {
+    const safeFeatureSlug = assertFeatureSlug(featureSlug);
+    const featureRoot = resolveWithin(this.workspacePaths.featuresDirectory, safeFeatureSlug);
+    const targetPath = resolveWithin(featureRoot, relativePath);
+    return readFile(targetPath, "utf8");
+  }
+
+  async listFeatureArtifacts(featureSlug: string, relativeDirectory = ""): Promise<string[]> {
+    const safeFeatureSlug = assertFeatureSlug(featureSlug);
+    const featureRoot = resolveWithin(this.workspacePaths.featuresDirectory, safeFeatureSlug);
+    const targetPath = resolveWithin(featureRoot, relativeDirectory);
+
+    try {
+      const entries = await readdir(targetPath, { withFileTypes: true });
+      return entries
+        .filter((entry) => entry.isFile())
+        .map((entry) => path.posix.join(relativeDirectory.replaceAll("\\", "/"), entry.name).replace(/^\//, ""));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return [];
       }
 
       throw error;

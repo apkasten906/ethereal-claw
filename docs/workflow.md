@@ -8,11 +8,13 @@ For exact syntax and options, see the [command reference](command-reference.md).
 
 | Stage | Command | Input | Main outputs | Prompt docs |
 | --- | --- | --- | --- | --- |
-| Ideate | `ethereal ideate "<request>"` | Rough feature request | Feature workspace, metadata, ideation, initial story, BDD placeholder | [Ideation](prompts/ideation.md), [Story writer](prompts/story-writer.md) |
-| Plan | `ethereal plan <feature-slug>` | Existing feature workspace | `plan.md`, `implementation/tasks.md` | [Planner](prompts/planner.md) |
+| Ideate | `ethereal ideate "<request>"` | Rough feature request | Feature workspace, metadata, ideation | [Ideation](prompts/ideation.md) |
+| Plan | `ethereal plan <feature-slug>` | Existing feature workspace | `plan.md`, `stories/*.md`, `implementation/tasks.md` | [Planner](prompts/planner.md), [Story writer](prompts/story-writer.md) |
+| BDD | `ethereal bdd <feature-slug>` | Planned feature workspace | `bdd/*.feature`, `traceability/traceability-map.json` | [Story writer](prompts/story-writer.md) |
+| Review Consistency | `ethereal review-consistency <feature-slug>` | Planned + BDD feature workspace | `review/consistency-review.md` | [Reviewer](prompts/reviewer.md) |
 | Implement | `ethereal implement <feature-slug>` | Existing feature workspace | `implementation/change-summary.md` | [Implementer](prompts/implementer.md) |
 | Test | `ethereal test <feature-slug>` | Existing feature workspace | `tests/test-plan.md`, `tests/generated-tests.md` | [Tester](prompts/tester.md) |
-| Review | `ethereal review <feature-slug>` | Existing feature workspace | `review/consistency-review.md`, `review/code-review.md` | [Reviewer](prompts/reviewer.md) |
+| Review | `ethereal review <feature-slug>` | Existing feature workspace | `review/code-review.md` | [Reviewer](prompts/reviewer.md) |
 
 Each stage writes artifacts into a feature workspace and appends a run log entry under both `.ec/runs/` and `.ec/features/<feature-slug>/run-history/` by default.
 
@@ -20,15 +22,27 @@ Use `ethereal status` or `ec status` to list known feature workspaces and their 
 
 ## Ideate
 
-`ideate` starts the workflow. It accepts a rough request, creates a stable feature slug, writes `feature.yaml`, and creates initial ideation, story, and BDD artifacts.
+`ideate` starts the workflow. It accepts a rough request, creates a stable feature slug, writes `feature.yaml`, and creates the initial ideation artifact.
 
 Use this stage when the feature does not already have a workspace.
 
 ## Plan
 
-`plan` expands the feature request into planning artifacts for an existing workspace. It uses the saved request from `feature.yaml` unless `--request` is provided.
+`plan` expands the feature request into planning artifacts for an existing workspace. It uses the saved request from `feature.yaml` unless `--request` is provided and produces the structured story artifact that later stages validate.
 
 Use this stage after reviewing the initial ideation artifacts.
+
+## BDD
+
+`bdd` converts the structured story artifact into Gherkin scenarios and a traceability map.
+
+Use this stage after the plan and story artifact are in place.
+
+## Review Consistency
+
+`review-consistency` validates the structured story, BDD, and traceability artifacts before implementation planning.
+
+Use this stage to catch artifact drift, missing mappings, and non-testable acceptance criteria.
 
 ## Implement
 
@@ -50,7 +64,7 @@ Use this stage to identify missing traceability, ambiguous requirements, and fol
 
 ## Full Run
 
-`ethereal run <feature-slug>` executes `plan`, `implement`, `test`, and `review` in order for an existing workspace. It intentionally skips `ideate` so existing feature metadata is not overwritten.
+`ethereal run <feature-slug>` executes `plan`, `bdd`, `review-consistency`, `implement`, `test`, and `review` in order for an existing workspace. It intentionally skips `ideate` so existing feature metadata is not recreated.
 
 ## Review Gates
 

@@ -1,4 +1,4 @@
-import { access, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -94,7 +94,9 @@ describe("WorkflowOrchestrator", () => {
       "test",
       "review"
     ]);
-    expect(afterRun).toBe(beforeRun);
+    expect(beforeRun).toContain("status: ideated");
+    expect(afterRun).toContain("status: reviewed");
+    expect(afterRun).toContain("request: refresh tokens for admins");
   });
 
   it("creates runtime directories during init", async () => {
@@ -114,6 +116,21 @@ describe("WorkflowOrchestrator", () => {
 
     const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
     const ideateResult = await orchestrator.ideate({
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.plan({
+      featureSlug: ideateResult.run.featureSlug,
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.bdd({
+      featureSlug: ideateResult.run.featureSlug,
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.reviewConsistency({
+      featureSlug: ideateResult.run.featureSlug,
       request: "refresh tokens for admins",
       dryRun: true
     });
@@ -242,6 +259,11 @@ describe("WorkflowOrchestrator", () => {
       request: "feature with multiline title",
       dryRun: true
     });
+    await orchestrator.plan({
+      featureSlug: "feature-multiline-title",
+      request: "feature with multiline title",
+      dryRun: true
+    });
     await orchestrator.bdd({
       featureSlug: "feature-multiline-title",
       request: "feature with multiline title",
@@ -255,6 +277,7 @@ describe("WorkflowOrchestrator", () => {
 
     expect(bddContent).not.toContain("\nLine two");
     expect(bddContent).toMatch(/^Feature: Line one Line two$/m);
+    expect(bddContent).toContain("Scenario: 001.1 AC-1");
   });
 
   it("moves story generation to plan and leaves ideate focused on ideation artifacts", async () => {
@@ -315,6 +338,91 @@ describe("WorkflowOrchestrator", () => {
     await expect(access(path.join(root, ".ec", "features", "feature-auth-refresh", "review", "consistency-review.md"))).resolves.toBeUndefined();
   });
 
+  it("refuses to overwrite a diverged story artifact", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.plan({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    const storyPath = path.join(root, ".ec", "features", "feature-auth-refresh", "stories", "001-initial-story.md");
+    await writeFile(storyPath, "# manually diverged\n", "utf8");
+
+    await expect(
+      orchestrator.plan({
+        featureSlug: "feature-auth-refresh",
+        request: "refresh tokens for admins",
+        dryRun: true
+      })
+    ).rejects.toThrow(/Refusing to overwrite diverged artifact/);
+  });
+
+  it("reports artifact divergence during consistency review", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.plan({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.bdd({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    const traceabilityPath = path.join(root, ".ec", "features", "feature-auth-refresh", "traceability", "traceability-map.json");
+    await writeFile(traceabilityPath, JSON.stringify({
+      featureSlug: "feature-auth-refresh",
+      generatedAt: "2026-04-17T00:00:00.000Z",
+      stories: [
+        {
+          storyId: "001",
+          storyTitle: "Initial vertical slice",
+          acceptanceCriteria: [
+            {
+              id: "AC-1",
+              description: "Drifted description",
+              bddScenarios: []
+            }
+          ]
+        }
+      ]
+    }, null, 2), "utf8");
+
+    const result = await orchestrator.reviewConsistency({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    const review = await readFile(
+      path.join(root, ".ec", "features", "feature-auth-refresh", "review", "consistency-review.md"),
+      "utf8"
+    );
+
+    expect(result.run.stage).toBe("review-consistency");
+    expect(review).toContain("Status: needs-attention");
+    expect(review).toContain("Acceptance criterion AC-1 description diverges");
+    expect(review).toContain("Acceptance criterion AC-1 has no BDD scenario mappings.");
+  });
+
   it("throws when the budget hard-stop threshold is reached", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
     tempDirs.push(root);
@@ -351,5 +459,11 @@ describe("WorkflowOrchestrator", () => {
 
     expect(runLog.success).toBe(false);
     expect(runLog.notes.some((n) => n.startsWith("Error:"))).toBe(true);
+
+    const featureMetadata = await readFile(
+      path.join(root, ".ec", "features", "feature-budget-test", "feature.yaml"),
+      "utf8"
+    );
+    expect(featureMetadata).toContain("status: draft");
   });
 });

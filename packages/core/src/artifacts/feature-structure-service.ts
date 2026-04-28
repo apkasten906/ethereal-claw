@@ -1,3 +1,4 @@
+import { rm } from "node:fs/promises";
 import path from "node:path";
 import { load, dump } from "js-yaml";
 import type { FeatureRecord } from "@ethereal-claw/shared";
@@ -24,6 +25,19 @@ export class FeatureStructureService {
 
   featureMetadataPath(slug: string): string {
     return resolveWithin(this.featureRoot(slug), "feature.yaml");
+  }
+
+  async workspaceExists(slug: string): Promise<boolean> {
+    try {
+      await readUtf8(this.featureMetadataPath(slug));
+      return true;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return false;
+      }
+
+      throw error;
+    }
   }
 
   async createWorkspace(feature: FeatureRecord): Promise<string> {
@@ -64,6 +78,25 @@ export class FeatureStructureService {
     }
 
     return parsed;
+  }
+
+  async updateFeature(slug: string, updates: Partial<Pick<FeatureRecord, "status" | "updatedAt" | "request" | "title">>): Promise<FeatureRecord> {
+    const feature = await this.loadFeature(slug);
+    const nextFeature = {
+      ...feature,
+      ...updates
+    };
+
+    await writeFileEnsured(
+      this.featureMetadataPath(slug),
+      dump(nextFeature, { lineWidth: -1 })
+    );
+
+    return nextFeature;
+  }
+
+  async removeWorkspace(slug: string): Promise<void> {
+    await rm(this.featureRoot(slug), { recursive: true, force: true });
   }
 
   private isFeatureRecord(value: unknown): value is FeatureRecord {
