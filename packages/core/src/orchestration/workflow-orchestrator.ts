@@ -23,6 +23,7 @@ export interface StageOptions {
   title?: string;
   request: string;
   dryRun?: boolean;
+  overwriteExisting?: boolean;
 }
 
 export class WorkflowOrchestrator {
@@ -54,16 +55,39 @@ export class WorkflowOrchestrator {
     this.resetStageState();
     const startedAt = nowUtcIso();
     const feature = this.buildFeature(options);
+    const overwriteExisting = options.overwriteExisting === true && await this.featureStructure.workspaceExists(feature.slug);
+    let stagingRoot: string | undefined;
+    let replacement: import("../artifacts/feature-structure-service.js").WorkspaceReplacement | undefined;
 
     try {
-      await this.featureStructure.createWorkspace(feature);
+      if (overwriteExisting) {
+        stagingRoot = await this.featureStructure.createStagingWorkspace(feature);
+      } else {
+        await this.featureStructure.createWorkspace(feature);
+      }
       const ideation = await this.agents.ideation.run(options.request);
       this.recordExecution("ideation", ideation, "ideate");
       const ideationPath = "ideation.md";
-      await this.artifacts.writeFeatureArtifact(feature.slug, ideationPath, ideation.content);
+      if (stagingRoot) {
+        await this.featureStructure.writeWorkspaceArtifact(stagingRoot, ideationPath, ideation.content);
+        replacement = await this.featureStructure.replaceWorkspaceFromStaging(feature.slug, stagingRoot);
+      } else {
+        await this.artifacts.writeFeatureArtifact(feature.slug, ideationPath, ideation.content);
+      }
 
-      return this.finishRun(feature.slug, "ideate", startedAt, options.dryRun ?? false, ["Ideation artifacts generated."]);
+      const result = await this.finishRun(feature.slug, "ideate", startedAt, options.dryRun ?? false, ["Ideation artifacts generated."]);
+      await replacement?.finalize();
+      return result;
     } catch (error) {
+      if (replacement) {
+        await replacement.rollback().catch((rollbackError: unknown) => {
+          this.logger.warn({ rollbackError }, "failed to restore overwritten feature workspace");
+        });
+      } else if (stagingRoot) {
+        await this.featureStructure.discardWorkspaceRoot(stagingRoot).catch((discardError: unknown) => {
+          this.logger.warn({ discardError }, "failed to discard staged feature workspace");
+        });
+      }
       await this.finishRun(feature.slug, "ideate", startedAt, options.dryRun ?? false,
         [`Error: ${error instanceof Error ? error.message : String(error)}`], false)
         .catch((logError: unknown) => { this.logger.warn({ logError }, "failed to write error run log"); });
@@ -440,7 +464,6 @@ export class WorkflowOrchestrator {
   private buildTraceabilityMap(featureSlug: string, story: Story): string {
     return `${JSON.stringify({
       featureSlug,
-      generatedAt: nowUtcIso(),
       stories: [
         {
           storyId: story.id,

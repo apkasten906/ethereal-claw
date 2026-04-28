@@ -74,7 +74,6 @@ export async function resolveIdeateConflict(
     )).trim().toLowerCase();
 
     if (answer === "yes" || answer === "y") {
-      await featureStructure.removeWorkspace(baseSlug);
       return { featureSlug: baseSlug, overwritten: true };
     }
 

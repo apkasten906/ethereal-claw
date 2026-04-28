@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WorkflowOrchestrator } from "../../packages/core/src/orchestration/workflow-orchestrator.js";
 import { MockProvider } from "../../packages/core/src/providers/mock-provider.js";
+import type { LlmProvider, ProviderRequest, ProviderResponse } from "../../packages/core/src/providers/llm-provider.js";
 
 const tempDirs: string[] = [];
 
@@ -338,6 +339,45 @@ describe("WorkflowOrchestrator", () => {
     await expect(access(path.join(root, ".ec", "features", "feature-auth-refresh", "review", "consistency-review.md"))).resolves.toBeUndefined();
   });
 
+  it("allows rerunning BDD when generated artifacts have not diverged", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.plan({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.bdd({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    const traceabilityPath = path.join(root, ".ec", "features", "feature-auth-refresh", "traceability", "traceability-map.json");
+    const initialTraceability = await readFile(traceabilityPath, "utf8");
+
+    await expect(
+      orchestrator.bdd({
+        featureSlug: "feature-auth-refresh",
+        request: "refresh tokens for admins",
+        dryRun: true
+      })
+    ).resolves.toMatchObject({
+      run: {
+        stage: "bdd"
+      }
+    });
+
+    await expect(readFile(traceabilityPath, "utf8")).resolves.toBe(initialTraceability);
+  });
+
   it("refuses to overwrite a diverged story artifact", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
     tempDirs.push(root);
@@ -390,7 +430,6 @@ describe("WorkflowOrchestrator", () => {
     const traceabilityPath = path.join(root, ".ec", "features", "feature-auth-refresh", "traceability", "traceability-map.json");
     await writeFile(traceabilityPath, JSON.stringify({
       featureSlug: "feature-auth-refresh",
-      generatedAt: "2026-04-17T00:00:00.000Z",
       stories: [
         {
           storyId: "001",
@@ -421,6 +460,55 @@ describe("WorkflowOrchestrator", () => {
     expect(review).toContain("Status: needs-attention");
     expect(review).toContain("Acceptance criterion AC-1 description diverges");
     expect(review).toContain("Acceptance criterion AC-1 has no BDD scenario mappings.");
+  });
+
+  it("restores the existing feature workspace when an overwrite attempt fails", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const originalIdeation = "original ideation\n";
+    const featureRoot = path.join(root, ".ec", "features", "feature-auth-refresh");
+    const originalConfig = createConfig();
+    const bootstrap = new WorkflowOrchestrator(new MockProvider(), originalConfig, root);
+    await bootstrap.ideate({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await writeFile(path.join(featureRoot, "ideation.md"), originalIdeation, "utf8");
+
+    class FailingProvider implements LlmProvider {
+      readonly name = "failing";
+
+      async complete(request: ProviderRequest): Promise<ProviderResponse> {
+        void request;
+        throw new Error("provider unavailable");
+      }
+    }
+
+    const orchestrator = new WorkflowOrchestrator(new FailingProvider(), originalConfig, root);
+
+    await expect(
+      orchestrator.ideate({
+        featureSlug: "feature-auth-refresh",
+        request: "refresh tokens for admins",
+        dryRun: true,
+        overwriteExisting: true
+      })
+    ).rejects.toThrow("provider unavailable");
+
+    await expect(readFile(path.join(featureRoot, "ideation.md"), "utf8")).resolves.toBe(originalIdeation);
+
+    const featureMetadata = await readFile(path.join(featureRoot, "feature.yaml"), "utf8");
+    expect(featureMetadata).toContain("status: ideated");
+
+    const runHistoryFiles = await readdir(path.join(featureRoot, "run-history"));
+    expect(runHistoryFiles.length).toBeGreaterThan(0);
+    const latestRun = JSON.parse(
+      await readFile(path.join(featureRoot, "run-history", runHistoryFiles.sort().at(-1) ?? ""), "utf8")
+    ) as { success: boolean; notes: string[] };
+    expect(latestRun.success).toBe(false);
+    expect(latestRun.notes.some((note) => note.includes("provider unavailable"))).toBe(true);
   });
 
   it("throws when the budget hard-stop threshold is reached", async () => {

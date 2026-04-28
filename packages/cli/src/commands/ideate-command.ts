@@ -13,7 +13,8 @@ export function createIdeateCommand(): Command {
       const result = await orchestrator.ideate({
         request,
         featureSlug: resolution.featureSlug,
-        dryRun: options.dryRun
+        dryRun: options.dryRun,
+        overwriteExisting: resolution.overwritten
       });
       printStageResult(
         "ideate",

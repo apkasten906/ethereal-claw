@@ -177,7 +177,7 @@ describe("resolveIdeateConflict", () => {
       });
       await expect(
         createFeatureStructure(root).workspaceExists("feature-refresh-tokens-for-admins")
-      ).resolves.toBe(false);
+      ).resolves.toBe(true);
     } finally {
       vi.doUnmock("node:readline/promises");
       vi.resetModules();

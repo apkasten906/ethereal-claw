@@ -12,7 +12,6 @@ export interface TraceabilityStory {
 
 export interface TraceabilityMap {
   featureSlug: string;
-  generatedAt: string;
   stories: TraceabilityStory[];
 }
 
@@ -35,7 +34,6 @@ function isTraceabilityMap(value: unknown): value is TraceabilityMap {
   const record = value as Record<string, unknown>;
   return (
     typeof record.featureSlug === "string" &&
-    typeof record.generatedAt === "string" &&
     Array.isArray(record.stories) &&
     record.stories.every((story) => isTraceabilityStory(story))
   );
