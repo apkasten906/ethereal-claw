@@ -39,7 +39,7 @@ export class FeatureStructureService {
 
   async workspaceExists(slug: string): Promise<boolean> {
     try {
-      await readUtf8(this.featureMetadataPath(slug));
+      await access(this.featureRoot(slug));
       return true;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") {

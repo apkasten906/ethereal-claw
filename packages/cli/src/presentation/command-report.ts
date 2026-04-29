@@ -45,7 +45,7 @@ export function formatCommandReport(report: CommandReport): string {
         `- Provider: ${report.provider ?? "unknown"}`,
         `- Model tier: ${report.budget.modelTier}`,
         `- Estimated tokens/cost: ${report.budget.estimatedInputTokens} input / ${report.budget.estimatedOutputTokens} output, $${report.budget.estimatedCostUsd.toFixed(4)}`,
-        `- Actual tokens/cost: ${report.budget.actualPromptTokens} input / ${report.budget.actualCompletionTokens} output, $${report.budget.estimatedCostUsd.toFixed(4)}`
+        `- Actual tokens (estimated cost): ${report.budget.actualPromptTokens} input / ${report.budget.actualCompletionTokens} output, $${report.budget.estimatedCostUsd.toFixed(4)}`
       ]
       : ["- none"]),
     "",

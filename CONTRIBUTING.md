@@ -79,6 +79,13 @@ The repo enforces branch naming with a local Husky `pre-push` hook and a CI bran
 - Add or update tests for meaningful behavior changes.
 - Record release-facing changes in `CHANGELOG.md`.
 
+## Architecture Decisions
+
+- Add or update an ADR in `docs/adr/` when a change introduces or revises a durable architectural decision.
+- Write an ADR for decisions that affect module boundaries, runtime model, filesystem layout, workflow semantics, safety guarantees, or contributor expectations.
+- Do not use ADRs for routine refactors, one-off bug fixes, or temporary implementation notes.
+- Link related docs or implementation changes when they help explain the decision.
+
 ## Pull Requests
 
 - Explain the user-visible impact.

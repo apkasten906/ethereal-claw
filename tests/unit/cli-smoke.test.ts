@@ -248,6 +248,7 @@ describe("CLI smoke", () => {
     expect(stdout).toContain("Written");
     expect(stdout).toContain("Result");
     expect(stdout).toContain("Next");
+    expect(stdout).toContain("Actual tokens (estimated cost)");
   });
 
   it("prints a complete aggregated read list for run reports", async () => {

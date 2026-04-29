@@ -572,7 +572,7 @@ describe("WorkflowOrchestrator", () => {
       readonly name = "failing";
 
       async complete(request: ProviderRequest): Promise<ProviderResponse> {
-        void request;
+        JSON.stringify(request);
         throw new Error("provider unavailable");
       }
     }
@@ -595,8 +595,10 @@ describe("WorkflowOrchestrator", () => {
 
     const runHistoryFiles = await readdir(path.join(featureRoot, "run-history"));
     expect(runHistoryFiles.length).toBeGreaterThan(0);
+    const sortedRunHistoryFiles = [...runHistoryFiles];
+    sortedRunHistoryFiles.sort((left: string, right: string) => left.localeCompare(right));
     const latestRun = JSON.parse(
-      await readFile(path.join(featureRoot, "run-history", runHistoryFiles.sort().at(-1) ?? ""), "utf8")
+      await readFile(path.join(featureRoot, "run-history", sortedRunHistoryFiles.at(-1) ?? ""), "utf8")
     ) as { success: boolean; notes: string[] };
     expect(latestRun.success).toBe(false);
     expect(latestRun.notes.some((note) => note.includes("provider unavailable"))).toBe(true);
@@ -617,7 +619,11 @@ describe("WorkflowOrchestrator", () => {
 
     const { FeatureStructureService } = await import("../../packages/core/src/artifacts/feature-structure-service.js");
     const originalReplace = FeatureStructureService.prototype.replaceWorkspaceFromStaging;
-    const replacementSpy = vi.spyOn(FeatureStructureService.prototype, "replaceWorkspaceFromStaging").mockImplementation(async function (slug, stagingRoot) {
+    const replacementSpy = vi.spyOn(FeatureStructureService.prototype, "replaceWorkspaceFromStaging").mockImplementation(async function (
+      this: InstanceType<typeof FeatureStructureService>,
+      slug: string,
+      stagingRoot: string
+    ) {
       const replacement = await originalReplace.call(this, slug, stagingRoot);
 
       return {

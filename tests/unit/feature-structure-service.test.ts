@@ -79,6 +79,17 @@ describe("FeatureStructureService", () => {
     });
   });
 
+  it("treats an existing feature directory without metadata as an existing workspace", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-"));
+    tempDirs.push(root);
+
+    await mkdir(path.join(root, ".ec", "features", "feature-auth-refresh"), { recursive: true });
+
+    const service = createService(root);
+
+    await expect(service.workspaceExists("feature-auth-refresh")).resolves.toBe(true);
+  });
+
   it("rejects feature metadata with an invalid status", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-"));
     tempDirs.push(root);

@@ -10,8 +10,8 @@ For exact syntax and options, see the [command reference](command-reference.md).
 | --- | --- | --- | --- | --- |
 | Ideate | `ethereal ideate "<request>"` | Rough feature request | Feature workspace, metadata, ideation | [Ideation](prompts/ideation.md) |
 | Plan | `ethereal plan <feature-slug>` | Existing feature workspace | `plan.md`, `stories/*.md`, `implementation/tasks.md` | [Planner](prompts/planner.md), [Story writer](prompts/story-writer.md) |
-| BDD | `ethereal bdd <feature-slug>` | Planned feature workspace | `bdd/*.feature`, `traceability/traceability-map.json` | [Story writer](prompts/story-writer.md) |
-| Review Consistency | `ethereal review-consistency <feature-slug>` | Planned + BDD feature workspace | `review/consistency-review.md` | [Reviewer](prompts/reviewer.md) |
+| BDD | `ethereal bdd <feature-slug>` | Planned feature workspace | `bdd/*.feature`, `traceability/traceability-map.json` | n/a (local transformation) |
+| Review Consistency | `ethereal review-consistency <feature-slug>` | Planned + BDD feature workspace | `review/consistency-review.md` | n/a (local validation) |
 | Implement | `ethereal implement <feature-slug>` | Existing feature workspace | `implementation/change-summary.md` | [Implementer](prompts/implementer.md) |
 | Test | `ethereal test <feature-slug>` | Existing feature workspace | `tests/test-plan.md`, `tests/generated-tests.md` | [Tester](prompts/tester.md) |
 | Review | `ethereal review <feature-slug>` | Existing feature workspace | `review/code-review.md` | [Reviewer](prompts/reviewer.md) |
@@ -23,6 +23,8 @@ Use `ethereal status` or `ec status` to list known feature workspaces and their 
 ## Write Safety
 
 The workflow is intentionally conservative when existing workspace state conflicts with new output.
+
+For the architectural rationale behind overwrite handling, see [ADR-0006: Replace feature workspaces through staging and rollback](adr/0006-replace-feature-workspaces-through-staging-and-rollback.md).
 
 Rules:
 

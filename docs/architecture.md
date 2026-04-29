@@ -6,6 +6,7 @@ Related docs:
 
 - [Command reference](command-reference.md)
 - [Workflow](workflow.md)
+- [Architecture decision records](adr/README.md)
 - [Prompt docs](prompts/ideation.md)
 
 ## Flow
