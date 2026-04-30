@@ -2,11 +2,13 @@
 
 import path from "node:path";
 import { Command } from "commander";
+import { createBddCommand } from "./commands/bdd-command.js";
 import { createIdeateCommand } from "./commands/ideate-command.js";
 import { createImplementCommand } from "./commands/implement-command.js";
 import { createInitCommand } from "./commands/init-command.js";
 import { createPlanCommand } from "./commands/plan-command.js";
 import { createReviewCommand } from "./commands/review-command.js";
+import { createReviewConsistencyCommand } from "./commands/review-consistency-command.js";
 import { createRunCommand } from "./commands/run-command.js";
 import { createStatusCommand } from "./commands/status-command.js";
 import { createTestCommand } from "./commands/test-command.js";
@@ -39,6 +41,8 @@ program
 program.addCommand(createInitCommand());
 program.addCommand(createIdeateCommand());
 program.addCommand(createPlanCommand());
+program.addCommand(createBddCommand());
+program.addCommand(createReviewConsistencyCommand());
 program.addCommand(createImplementCommand());
 program.addCommand(createTestCommand());
 program.addCommand(createReviewCommand());

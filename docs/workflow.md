@@ -8,27 +8,59 @@ For exact syntax and options, see the [command reference](command-reference.md).
 
 | Stage | Command | Input | Main outputs | Prompt docs |
 | --- | --- | --- | --- | --- |
-| Ideate | `ethereal ideate "<request>"` | Rough feature request | Feature workspace, metadata, ideation, initial story, BDD placeholder | [Ideation](prompts/ideation.md), [Story writer](prompts/story-writer.md) |
-| Plan | `ethereal plan <feature-slug>` | Existing feature workspace | `plan.md`, `implementation/tasks.md` | [Planner](prompts/planner.md) |
+| Ideate | `ethereal ideate "<request>"` | Rough feature request | Feature workspace, metadata, ideation | [Ideation](prompts/ideation.md) |
+| Plan | `ethereal plan <feature-slug>` | Existing feature workspace | `plan.md`, `stories/*.md`, `implementation/tasks.md` | [Planner](prompts/planner.md), [Story writer](prompts/story-writer.md) |
+| BDD | `ethereal bdd <feature-slug>` | Planned feature workspace | `bdd/*.feature`, `traceability/traceability-map.json` | n/a (local transformation) |
+| Review Consistency | `ethereal review-consistency <feature-slug>` | Planned + BDD feature workspace | `review/consistency-review.md` | n/a (local validation) |
 | Implement | `ethereal implement <feature-slug>` | Existing feature workspace | `implementation/change-summary.md` | [Implementer](prompts/implementer.md) |
 | Test | `ethereal test <feature-slug>` | Existing feature workspace | `tests/test-plan.md`, `tests/generated-tests.md` | [Tester](prompts/tester.md) |
-| Review | `ethereal review <feature-slug>` | Existing feature workspace | `review/consistency-review.md`, `review/code-review.md` | [Reviewer](prompts/reviewer.md) |
+| Review | `ethereal review <feature-slug>` | Existing feature workspace | `review/code-review.md` | [Reviewer](prompts/reviewer.md) |
 
 Each stage writes artifacts into a feature workspace and appends a run log entry under both `.ec/runs/` and `.ec/features/<feature-slug>/run-history/` by default.
 
 Use `ethereal status` or `ec status` to list known feature workspaces and their next recommended commands. Use `ec status <feature-slug>` for a feature-specific view of current stage, available artifacts, missing artifacts, latest run result, and token usage. Status reads local workspace files only and does not call an LLM provider.
 
+## Write Safety
+
+The workflow is intentionally conservative when existing workspace state conflicts with new output.
+
+For the architectural rationale behind overwrite handling, see [ADR-0006: Replace feature workspaces through staging and rollback](adr/0006-replace-feature-workspaces-through-staging-and-rollback.md).
+
+Rules:
+
+* Overwrites must be explicit.
+* Interactive commands may prompt; non-interactive and `--json` usage must not prompt.
+* Automation paths must return deterministic conflict errors.
+* Whole-workspace replacement must stage new content before swapping it into place.
+* Cleanup failure after a committed write is a warning, not a rollback trigger.
+* Deterministic artifacts should not include volatile fields that break idempotent reruns.
+* Diverged user-edited artifacts should fail closed instead of being silently replaced.
+
 ## Ideate
 
-`ideate` starts the workflow. It accepts a rough request, creates a stable feature slug, writes `feature.yaml`, and creates initial ideation, story, and BDD artifacts.
+`ideate` starts the workflow. It accepts a rough request, creates a stable feature slug, writes `feature.yaml`, and creates the initial ideation artifact.
+
+If the derived feature slug already exists, interactive CLI usage prompts for overwrite confirmation. Non-interactive and `--json` usage require an explicit overwrite decision and otherwise fail cleanly without prompting.
 
 Use this stage when the feature does not already have a workspace.
 
 ## Plan
 
-`plan` expands the feature request into planning artifacts for an existing workspace. It uses the saved request from `feature.yaml` unless `--request` is provided.
+`plan` expands the feature request into planning artifacts for an existing workspace. It uses the saved request from `feature.yaml` unless `--request` is provided and produces the structured story artifact that later stages validate.
 
 Use this stage after reviewing the initial ideation artifacts.
+
+## BDD
+
+`bdd` converts the structured story artifact into Gherkin scenarios and a traceability map.
+
+Use this stage after the plan and story artifact are in place.
+
+## Review Consistency
+
+`review-consistency` validates the structured story, BDD, and traceability artifacts before implementation planning.
+
+Use this stage to catch artifact drift, missing mappings, and non-testable acceptance criteria.
 
 ## Implement
 
@@ -50,7 +82,7 @@ Use this stage to identify missing traceability, ambiguous requirements, and fol
 
 ## Full Run
 
-`ethereal run <feature-slug>` executes `plan`, `implement`, `test`, and `review` in order for an existing workspace. It intentionally skips `ideate` so existing feature metadata is not overwritten.
+`ethereal run <feature-slug>` executes `plan`, `bdd`, `review-consistency`, `implement`, `test`, and `review` in order for an existing workspace. It intentionally skips `ideate` so existing feature metadata is not recreated.
 
 ## Review Gates
 

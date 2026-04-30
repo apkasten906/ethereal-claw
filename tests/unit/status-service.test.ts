@@ -44,7 +44,7 @@ describe("StatusService", () => {
       {
         slug: "feature-auth-refresh",
         currentStage: "plan",
-        nextCommand: "ec implement feature-auth-refresh"
+        nextCommand: "ec bdd feature-auth-refresh"
       }
     ]);
   });
@@ -67,11 +67,10 @@ describe("StatusService", () => {
 
     expect(inspected).toMatchObject({
       currentStage: "plan",
-      nextCommand: "ec implement feature-auth-refresh"
+      nextCommand: "ec bdd feature-auth-refresh"
     });
     expect(inspected?.availableArtifacts.map((artifact) => artifact.label)).toEqual(["ideation", "stories"]);
     expect(inspected?.missingArtifacts.map((artifact) => artifact.label)).toEqual([
-      "bdd",
       "plan",
       "implementation tasks"
     ]);
@@ -93,6 +92,24 @@ describe("StatusService", () => {
     expect(formatFeatureStatus(inspected!)).toContain("Feature: Auth Refresh");
     expect(formatFeatureStatus(inspected!)).toContain("Available artifacts:\n- none");
     expect(formatFeatureStatus(inspected!)).toContain("Next: ec plan feature-auth-refresh");
+  });
+
+  it("advances next steps through bdd and review-consistency", async () => {
+    const { root, featureStructure, status } = await createServices();
+    await featureStructure.createWorkspace({
+      slug: "feature-auth-refresh",
+      title: "Auth Refresh",
+      request: "refresh tokens",
+      status: "draft",
+      createdAt: "2026-04-17T00:00:00.000Z",
+      updatedAt: "2026-04-17T00:00:00.000Z"
+    });
+    await writeRunLog(root, "feature-auth-refresh", "review-consistency", true);
+
+    const inspected = await status.inspectFeature("feature-auth-refresh");
+
+    expect(inspected?.currentStage).toBe("review-consistency");
+    expect(inspected?.nextCommand).toBe("ec implement feature-auth-refresh");
   });
 
   it("surfaces malformed feature metadata during feature listing", async () => {

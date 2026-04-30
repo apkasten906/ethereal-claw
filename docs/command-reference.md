@@ -15,9 +15,9 @@ Related docs:
 
 ## Shared Behavior
 
-The stage commands (`ideate`, `plan`, `implement`, `test`, `review`, and `run`) print JSON to stdout. Core logs are written to stderr so JSON output remains script-friendly.
+Stage commands print human-readable reports to stdout by default. Pass `--json` to any workflow stage command when you need machine-readable output for automation.
 
-`init` and `status` print human-readable status messages to stdout because they are setup and orientation commands rather than workflow stages.
+`init` and `status` remain human-readable orientation commands.
 
 Every stage writes a run log to both:
 
@@ -27,6 +27,13 @@ Every stage writes a run log to both:
 `--dry-run` marks the run log as a dry run. In the current scaffold, stages still write their planned artifacts; the flag records intent and makes dry-run executions easy to identify in logs.
 
 Commands after `ideate` require an existing feature workspace. The `--request` option only overrides the saved request text; it does not create a missing `.ec/features/<feature-slug>/feature.yaml`.
+
+Conflict and overwrite policy:
+
+- interactive commands may prompt when overwrite decisions are required
+- non-interactive and `--json` usage must never prompt
+- automation-safe conflicts return deterministic errors
+- stage-owned deterministic artifacts may be regenerated only when they remain synchronized; otherwise the command fails instead of silently replacing them
 
 ## `ethereal init`
 
@@ -69,16 +76,22 @@ ec ideate "multi-tenant auth for admin portal"
 Options:
 
 - `--dry-run`: mark the run log as a dry-run execution.
+- `--overwrite`: replace an existing feature workspace with the same slug.
+- `--json`: emit the run log as JSON instead of the default report.
 
 Writes:
 
 - `.ec/features/<feature-slug>/feature.yaml`
 - `.ec/features/<feature-slug>/ideation.md`
-- `.ec/features/<feature-slug>/stories/001-initial-story.md`
-- `.ec/features/<feature-slug>/bdd/001-initial.feature`
 - run logs under `.ec/runs/` and `.ec/features/<feature-slug>/run-history/`
 
 The feature slug is generated from the request with a `feature-` prefix unless the core API is called directly with an explicit slug.
+
+If a matching feature already exists:
+
+- interactive mode prompts: `A feature with the name you provided already exists. Overwrite? [Y]es or [N]o.`
+- answering `No` or pressing Enter cancels the operation without changing the existing workspace
+- non-interactive and `--json` usage do not prompt; pass `--overwrite` or handle the reported conflict error
 
 Related docs:
 
@@ -101,6 +114,7 @@ Options:
 
 - `--request <request>`: override the saved request from `feature.yaml`.
 - `--dry-run`: mark the run log as a dry-run execution.
+- `--json`: emit the run log as JSON instead of the default report.
 
 Preconditions:
 
@@ -110,6 +124,7 @@ Preconditions:
 Writes:
 
 - `.ec/features/<feature-slug>/plan.md`
+- `.ec/features/<feature-slug>/stories/001-initial-story.md`
 - `.ec/features/<feature-slug>/implementation/tasks.md`
 - run logs under `.ec/runs/` and `.ec/features/<feature-slug>/run-history/`
 
@@ -117,6 +132,56 @@ Related docs:
 
 - [Workflow: Plan](workflow.md#plan)
 - [Planner prompt](prompts/planner.md)
+
+## `ethereal bdd <feature-slug>`
+
+Generate BDD and traceability artifacts for an existing feature workspace.
+
+Syntax:
+
+```bash
+ethereal bdd feature-auth-refresh
+ec bdd feature-auth-refresh
+```
+
+Options:
+
+- `--request <request>`: override the saved request from `feature.yaml`.
+- `--dry-run`: mark the run log as a dry-run execution.
+- `--json`: emit the run log as JSON instead of the default report.
+
+Preconditions:
+
+- `.ec/features/<feature-slug>/plan.md` must exist.
+- `.ec/features/<feature-slug>/stories/001-initial-story.md` must exist.
+
+Writes:
+
+- `.ec/features/<feature-slug>/bdd/001-initial.feature`
+- `.ec/features/<feature-slug>/traceability/traceability-map.json`
+- run logs under `.ec/runs/` and `.ec/features/<feature-slug>/run-history/`
+
+## `ethereal review-consistency <feature-slug>`
+
+Validate story, BDD, and traceability consistency before implementation.
+
+Syntax:
+
+```bash
+ethereal review-consistency feature-auth-refresh
+ec review-consistency feature-auth-refresh
+```
+
+Options:
+
+- `--request <request>`: override the saved request from `feature.yaml`.
+- `--dry-run`: mark the run log as a dry-run execution.
+- `--json`: emit the run log as JSON instead of the default report.
+
+Writes:
+
+- `.ec/features/<feature-slug>/review/consistency-review.md`
+- run logs under `.ec/runs/` and `.ec/features/<feature-slug>/run-history/`
 
 ## `ethereal implement <feature-slug>`
 
@@ -133,6 +198,7 @@ Options:
 
 - `--request <request>`: override the saved request from `feature.yaml`.
 - `--dry-run`: mark the run log as a dry-run execution.
+- `--json`: emit the run log as JSON instead of the default report.
 
 Preconditions:
 
@@ -165,6 +231,7 @@ Options:
 
 - `--request <request>`: override the saved request from `feature.yaml`.
 - `--dry-run`: mark the run log as a dry-run execution.
+- `--json`: emit the run log as JSON instead of the default report.
 
 Preconditions:
 
@@ -198,6 +265,7 @@ Options:
 
 - `--request <request>`: override the saved request from `feature.yaml`.
 - `--dry-run`: mark the run log as a dry-run execution.
+- `--json`: emit the run log as JSON instead of the default report.
 
 Preconditions:
 
@@ -205,7 +273,6 @@ Preconditions:
 
 Writes:
 
-- `.ec/features/<feature-slug>/review/consistency-review.md`
 - `.ec/features/<feature-slug>/review/code-review.md`
 - run logs under `.ec/runs/` and `.ec/features/<feature-slug>/run-history/`
 
@@ -263,6 +330,7 @@ Options:
 
 - `--request <request>`: override the saved request from `feature.yaml` for all stages in this run.
 - `--dry-run`: mark all generated run logs as dry-run executions.
+- `--json`: emit the run logs as JSON instead of the default report.
 
 Preconditions:
 
@@ -272,9 +340,11 @@ Preconditions:
 Runs, in order:
 
 1. `plan`
-2. `implement`
-3. `test`
-4. `review`
+2. `bdd`
+3. `review-consistency`
+4. `implement`
+5. `test`
+6. `review`
 
 `run` does not rerun `ideate`, so it does not recreate or overwrite `feature.yaml`.
 
@@ -290,14 +360,15 @@ Feature workspaces are stored under `.ec/features/<feature-slug>/` by default. S
 | --- | --- | --- |
 | `feature.yaml` | `ideate` | Stable feature metadata: slug, title, request, status, timestamps. |
 | `ideation.md` | `ideate` | Feature concept, assumptions, risks, and candidate stories. |
-| `stories/001-initial-story.md` | `ideate` | Initial story draft. |
-| `bdd/001-initial.feature` | `ideate` | Initial Gherkin-style BDD placeholder. |
 | `plan.md` | `plan` | Planning output from the planner agent. |
+| `stories/001-initial-story.md` | `plan` | Structured story artifact with synchronized embedded agent model. |
 | `implementation/tasks.md` | `plan` | Initial implementation task checklist. |
+| `bdd/001-initial.feature` | `bdd` | BDD scenarios derived from the structured story. |
+| `traceability/traceability-map.json` | `bdd` | Story, acceptance-criteria, and BDD linkage map. |
 | `implementation/change-summary.md` | `implement` | File-level implementation plan and change summary. |
 | `tests/test-plan.md` | `test` | Test strategy and coverage guidance. |
 | `tests/generated-tests.md` | `test` | Generated test candidates or placeholders. |
-| `review/consistency-review.md` | `review` | Traceability and consistency review. |
+| `review/consistency-review.md` | `review-consistency` | Traceability and synchronization review. |
 | `review/code-review.md` | `review` | Human review gate placeholder. |
 | `run-history/<run-id>.json` | all stages | Per-feature run log copy. |
 | `.ec/runs/<run-id>.json` | all stages | Global run log copy. |

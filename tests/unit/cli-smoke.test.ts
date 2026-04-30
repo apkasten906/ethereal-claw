@@ -105,16 +105,17 @@ describe("CLI smoke", () => {
     await expect(access(path.join(root, "artifacts", "config", "agent-policies.yaml"))).rejects.toThrow();
   });
 
-  it("ideate writes feature artifacts and a run log with budget data", async () => {
+  it("ideate writes ideation artifacts and a run log with budget data", async () => {
     const root = await createTempWorkspace();
     await mkdir(path.join(root, ".ec", "config"), { recursive: true });
     await copyFile(exampleConfig, path.join(root, ".ec", "config", "project.yaml"));
 
-    const { stdout } = await runCli(root, ["ideate", "Add secure login audit history", "--dry-run"]);
+    const { stdout } = await runCli(root, ["ideate", "Add secure login audit history", "--dry-run", "--json"]);
     const parsed = JSON.parse(stdout.trim());
 
     await expect(access(path.join(root, ".ec", "features", "feature-add-secure-login-audit-history", "ideation.md"))).resolves.toBeUndefined();
-    await expect(access(path.join(root, ".ec", "features", "feature-add-secure-login-audit-history", "stories", "001-initial-story.md"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, ".ec", "features", "feature-add-secure-login-audit-history", "stories", "001-initial-story.md"))).rejects.toThrow();
+    await expect(access(path.join(root, ".ec", "features", "feature-add-secure-login-audit-history", "bdd", "001-initial.feature"))).rejects.toThrow();
     await expect(access(path.join(root, "features"))).rejects.toThrow();
     await expect(access(path.join(root, "runs"))).rejects.toThrow();
 
@@ -125,54 +126,79 @@ describe("CLI smoke", () => {
       await readFile(path.join(root, ".ec", "runs", runFiles[0] ?? ""), "utf8")
     );
 
-    expect(parsed.executions.length).toBeGreaterThan(0);
+    expect(parsed.executions.length).toBe(1);
     expect(runLog.executions[0]).toHaveProperty("estimatedInputTokens");
     expect(runLog.executions[0]).toHaveProperty("estimatedCostUsd");
     expect(runLog.dryRun).toBe(true);
   });
 
+  it("returns a structured conflict error for ideate --json without prompting", async () => {
+    const root = await createTempWorkspace();
+    await mkdir(path.join(root, ".ec", "config"), { recursive: true });
+    await copyFile(exampleConfig, path.join(root, ".ec", "config", "project.yaml"));
+
+    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run", "--json"]);
+
+    await expect(runCli(root, ["ideate", "Add secure login audit history", "--dry-run", "--json"]))
+      .rejects.toMatchObject({
+        stdout: expect.stringContaining("\"code\": \"feature_conflict\""),
+        stderr: ""
+      });
+  });
+
   it("loads the saved feature request for later stages when --request is omitted", async () => {
     const root = await createTempWorkspace();
 
-    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run"]);
-    const { stdout } = await runCli(root, ["plan", "feature-add-secure-login-audit-history", "--dry-run"]);
+    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run", "--json"]);
+    const { stdout } = await runCli(root, ["plan", "feature-add-secure-login-audit-history", "--dry-run", "--json"]);
     const parsed = JSON.parse(stdout.trim());
 
     expect(parsed.featureSlug).toBe("feature-add-secure-login-audit-history");
     await expect(
       access(path.join(root, ".ec", "features", "feature-add-secure-login-audit-history", "plan.md"))
     ).resolves.toBeUndefined();
+    await expect(
+      access(path.join(root, ".ec", "features", "feature-add-secure-login-audit-history", "stories", "001-initial-story.md"))
+    ).resolves.toBeUndefined();
   });
 
   it("reports workflow status without invoking a stage", async () => {
     const root = await createTempWorkspace();
 
-    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run"]);
-    await runCli(root, ["plan", "feature-add-secure-login-audit-history", "--dry-run"]);
+    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run", "--json"]);
+    await runCli(root, ["plan", "feature-add-secure-login-audit-history", "--dry-run", "--json"]);
+    await runCli(root, ["bdd", "feature-add-secure-login-audit-history", "--dry-run", "--json"]);
 
     const overview = await runCli(root, ["status"]);
     expect(overview.stdout).toContain("Known features");
     expect(overview.stdout).toContain("feature-add-secure-login-audit-history");
-    expect(overview.stdout).toContain("stage: plan");
+    expect(overview.stdout).toContain("stage: bdd");
 
     const detail = await runCli(root, ["status", "feature-add-secure-login-audit-history"]);
-    expect(detail.stdout).toContain("Current stage: plan");
+    expect(detail.stdout).toContain("Current stage: bdd");
     expect(detail.stdout).toContain("Available artifacts:");
     expect(detail.stdout).toContain("Missing artifacts:");
-    expect(detail.stdout).toContain("Next: ec implement feature-add-secure-login-audit-history");
+    expect(detail.stdout).toContain("Next: ec review-consistency feature-add-secure-login-audit-history");
   });
 
   it("runs existing feature stages without rerunning ideation", async () => {
     const root = await createTempWorkspace();
 
-    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run"]);
-    const { stdout } = await runCli(root, ["run", "feature-add-secure-login-audit-history", "--dry-run"]);
+    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run", "--json"]);
+    const { stdout } = await runCli(root, ["run", "feature-add-secure-login-audit-history", "--dry-run", "--json"]);
     const parsed = JSON.parse(stdout.trim());
 
-    expect(parsed.map((run: { stage: string }) => run.stage)).toEqual(["plan", "implement", "test", "review"]);
+    expect(parsed.map((run: { stage: string }) => run.stage)).toEqual([
+      "plan",
+      "bdd",
+      "review-consistency",
+      "implement",
+      "test",
+      "review"
+    ]);
 
     const runFiles = await readdir(path.join(root, ".ec", "runs"));
-    expect(runFiles).toHaveLength(5);
+    expect(runFiles).toHaveLength(7);
   });
 
   it("uses configured workspace directory overrides", async () => {
@@ -198,11 +224,46 @@ describe("CLI smoke", () => {
       ].join("\n")
     );
 
-    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run"]);
-    await runCli(root, ["plan", "feature-add-secure-login-audit-history", "--dry-run"]);
+    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run", "--json"]);
+    await runCli(root, ["plan", "feature-add-secure-login-audit-history", "--dry-run", "--json"]);
+    await runCli(root, ["bdd", "feature-add-secure-login-audit-history", "--dry-run", "--json"]);
 
     await expect(access(path.join(root, "artifacts", "features", "feature-add-secure-login-audit-history", "ideation.md"))).resolves.toBeUndefined();
     await expect(access(path.join(root, "artifacts", "features", "feature-add-secure-login-audit-history", "plan.md"))).resolves.toBeUndefined();
+    await expect(access(path.join(root, "artifacts", "features", "feature-add-secure-login-audit-history", "traceability", "traceability-map.json"))).resolves.toBeUndefined();
     await expect(access(path.join(root, "artifacts", "runs"))).resolves.toBeUndefined();
+  });
+
+  it("prints human-readable output by default for stage commands", async () => {
+    const root = await createTempWorkspace();
+    await mkdir(path.join(root, ".ec", "config"), { recursive: true });
+    await copyFile(exampleConfig, path.join(root, ".ec", "config", "project.yaml"));
+
+    const { stdout } = await runCli(root, ["ideate", "Add secure login audit history", "--dry-run"]);
+
+    expect(stdout).toContain("Ethereal-CLAW");
+    expect(stdout).toContain("Command: ideate");
+    expect(stdout).toContain("Input");
+    expect(stdout).toContain("Read");
+    expect(stdout).toContain("Written");
+    expect(stdout).toContain("Result");
+    expect(stdout).toContain("Next");
+    expect(stdout).toContain("Actual tokens (estimated cost)");
+  });
+
+  it("prints a complete aggregated read list for run reports", async () => {
+    const root = await createTempWorkspace();
+    await mkdir(path.join(root, ".ec", "config"), { recursive: true });
+    await copyFile(exampleConfig, path.join(root, ".ec", "config", "project.yaml"));
+
+    await runCli(root, ["ideate", "Add secure login audit history", "--dry-run", "--json"]);
+    const { stdout } = await runCli(root, ["run", "feature-add-secure-login-audit-history", "--dry-run"]);
+
+    expect(stdout).toContain("Read");
+    expect(stdout).toContain(".ec/features/feature-add-secure-login-audit-history/plan.md");
+    expect(stdout).toContain(".ec/features/feature-add-secure-login-audit-history/bdd/001-initial.feature");
+    expect(stdout).toContain(".ec/features/feature-add-secure-login-audit-history/review/consistency-review.md");
+    expect(stdout).toContain(".ec/features/feature-add-secure-login-audit-history/implementation/change-summary.md");
+    expect(stdout).toContain(".ec/features/feature-add-secure-login-audit-history/tests/test-plan.md");
   });
 });
