@@ -26,6 +26,14 @@ export interface StageOptions {
   overwriteExisting?: boolean;
 }
 
+type ConsistencyReviewStatus = "ready-for-implement" | "needs-attention";
+
+interface ConsistencyReviewResult {
+  content: string;
+  findings: string[];
+  status: ConsistencyReviewStatus;
+}
+
 export class FeatureWorkspaceConflictError extends Error {
   constructor(
     readonly featureSlug: string,
@@ -214,15 +222,18 @@ export class WorkflowOrchestrator {
       );
       const review = await this.buildConsistencyReview(featureSlug);
       const reviewPath = path.join("review", "consistency-review.md");
-      await this.assertSafeToWriteArtifact(featureSlug, reviewPath, review);
-      await this.artifacts.writeFeatureArtifact(featureSlug, reviewPath, review);
+      await this.assertSafeToWriteArtifact(featureSlug, reviewPath, review.content);
+      await this.artifacts.writeFeatureArtifact(featureSlug, reviewPath, review.content);
 
       return this.finishRun(
         featureSlug,
         "review-consistency",
         startedAt,
         options.dryRun ?? false,
-        ["Consistency review generated."]
+        review.status === "ready-for-implement"
+          ? ["Consistency review generated."]
+          : ["Consistency review generated with findings that must be resolved before implementation."],
+        review.status === "ready-for-implement"
       );
     } catch (error) {
       await this.finishRun(featureSlug, "review-consistency", startedAt, options.dryRun ?? false,
@@ -244,6 +255,7 @@ export class WorkflowOrchestrator {
         [path.join("review", "consistency-review.md")],
         "Implementation planning requires a completed consistency review. Run `ec review-consistency` first."
       );
+      await this.ensureConsistencyReviewPassed(featureSlug);
       const result = await this.agents.implementer.run(options.request);
       this.recordExecution("implementer", result, "implement");
       const summaryPath = path.join("implementation", "change-summary.md");
@@ -506,7 +518,7 @@ export class WorkflowOrchestrator {
     }, null, 2)}\n`;
   }
 
-  private async buildConsistencyReview(featureSlug: string): Promise<string> {
+  private async buildConsistencyReview(featureSlug: string): Promise<ConsistencyReviewResult> {
     const checks = await Promise.all([
       this.artifactCheck(featureSlug, "plan", "plan.md"),
       this.artifactCheck(featureSlug, "stories", path.join("stories", "001-initial-story.md")),
@@ -540,23 +552,27 @@ export class WorkflowOrchestrator {
 
     const status = findings.length === 0 ? "ready-for-implement" : "needs-attention";
 
-    return [
-      "# Consistency Review",
-      "",
-      `Status: ${status}`,
-      "",
-      "## Checks",
-      ...checks.map((result) => `- ${result.label}: ${result.present ? "present" : "missing"}`),
-      "",
-      "## Findings",
-      ...(findings.length === 0
-        ? [
-          "- Story markdown and embedded agent model are synchronized.",
-          "- Acceptance criteria, BDD scenarios, and traceability links are consistent.",
-          "- Ready to continue into implementation planning."
-        ]
-        : findings.map((finding) => `- ${finding}`))
-    ].join("\n");
+    return {
+      findings,
+      status,
+      content: [
+        "# Consistency Review",
+        "",
+        `Status: ${status}`,
+        "",
+        "## Checks",
+        ...checks.map((result) => `- ${result.label}: ${result.present ? "present" : "missing"}`),
+        "",
+        "## Findings",
+        ...(findings.length === 0
+          ? [
+            "- Story markdown and embedded agent model are synchronized.",
+            "- Acceptance criteria, BDD scenarios, and traceability links are consistent.",
+            "- Ready to continue into implementation planning."
+          ]
+          : findings.map((finding) => `- ${finding}`))
+      ].join("\n")
+    };
   }
 
   private async artifactCheck(featureSlug: string, label: string, artifactPath: string): Promise<{ label: string; present: boolean }> {
@@ -576,6 +592,18 @@ export class WorkflowOrchestrator {
 
     if (missing.length > 0) {
       throw new Error(`${message} Missing: ${missing.join(", ")}`);
+    }
+  }
+
+  private async ensureConsistencyReviewPassed(featureSlug: string): Promise<void> {
+    const reviewPath = path.join("review", "consistency-review.md");
+    const reviewContent = await this.artifacts.readFeatureArtifact(featureSlug, reviewPath);
+    const status = this.parseConsistencyReviewStatus(reviewContent);
+
+    if (status !== "ready-for-implement") {
+      throw new Error(
+        `Implementation planning requires a passing consistency review. Re-run \`ec review-consistency ${featureSlug}\` after resolving the reported findings.`
+      );
     }
   }
 
@@ -713,6 +741,20 @@ export class WorkflowOrchestrator {
 
   private sanitizeScenarioText(value: string): string {
     return value.replaceAll(/[\r\n]+/g, " ").replaceAll(/[^\w\s-]/g, "").trim();
+  }
+
+  private parseConsistencyReviewStatus(reviewContent: string): ConsistencyReviewStatus {
+    const match = /^Status:\s*(ready-for-implement|needs-attention)\s*$/m.exec(reviewContent);
+    if (!match) {
+      throw new Error("Consistency review artifact is missing a valid status line. Re-run `ec review-consistency`.");
+    }
+
+    const status = match[1];
+    if (status === "ready-for-implement" || status === "needs-attention") {
+      return status;
+    }
+
+    throw new Error("Consistency review artifact is missing a valid status line. Re-run `ec review-consistency`.");
   }
 
   private featureStatusForStage(stage: WorkflowStage): FeatureRecord["status"] {

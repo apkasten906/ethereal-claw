@@ -64,7 +64,7 @@ describe("WorkflowOrchestrator", () => {
     expect(runFiles).toHaveLength(7);
   });
 
-  it("does not rerun ideation or rewrite feature metadata during a full run", async () => {
+  it("does not rerun ideation or rewrite the saved feature request during a full run", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
     tempDirs.push(root);
 
@@ -505,9 +505,52 @@ describe("WorkflowOrchestrator", () => {
     );
 
     expect(result.run.stage).toBe("review-consistency");
+    expect(result.run.success).toBe(false);
     expect(review).toContain("Status: needs-attention");
     expect(review).toContain("Acceptance criterion AC-1 description diverges");
     expect(review).toContain("Acceptance criterion AC-1 has no BDD scenario mappings.");
+  });
+
+  it("refuses to implement when the consistency review reports needs-attention", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "ethereal-claw-orchestrator-"));
+    tempDirs.push(root);
+
+    const orchestrator = new WorkflowOrchestrator(new MockProvider(), createConfig(), root);
+    await orchestrator.ideate({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.plan({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+    await orchestrator.bdd({
+      featureSlug: "feature-auth-refresh",
+      request: "refresh tokens for admins",
+      dryRun: true
+    });
+
+    const reviewPath = path.join(root, ".ec", "features", "feature-auth-refresh", "review", "consistency-review.md");
+    await writeFile(reviewPath, [
+      "# Consistency Review",
+      "",
+      "Status: needs-attention",
+      "",
+      "## Findings",
+      "- Traceability drift requires follow-up."
+    ].join("\n"), "utf8");
+
+    await expect(
+      orchestrator.implement({
+        featureSlug: "feature-auth-refresh",
+        request: "refresh tokens for admins",
+        dryRun: true
+      })
+    ).rejects.toThrow(
+      "Implementation planning requires a passing consistency review. Re-run `ec review-consistency feature-auth-refresh` after resolving the reported findings."
+    );
   });
 
   it("refuses to overwrite diverged implementation artifacts", async () => {

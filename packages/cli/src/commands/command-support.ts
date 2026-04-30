@@ -170,7 +170,7 @@ export function stagePaths(command: string, featureSlug: string, rootDir: string
       };
     case "test":
       return {
-        read: [configPath, `${featureRoot}/implementation/change-summary.md`, `${featureRoot}/stories/001-initial-story.md`, `${featureRoot}/bdd/001-initial.feature`],
+        read: [configPath, `${featureRoot}/implementation/change-summary.md`],
         written: [
           `${featureRoot}/tests/test-plan.md`,
           `${featureRoot}/tests/generated-tests.md`,
@@ -180,7 +180,7 @@ export function stagePaths(command: string, featureSlug: string, rootDir: string
       };
     case "review":
       return {
-        read: [configPath, `${featureRoot}/stories/001-initial-story.md`, `${featureRoot}/tests/test-plan.md`, `${featureRoot}/tests/generated-tests.md`],
+        read: [configPath],
         written: [
           `${featureRoot}/review/code-review.md`,
           path.relative(rootDir, workspace.runsDirectory).replaceAll("\\", "/")
